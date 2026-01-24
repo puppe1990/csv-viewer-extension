@@ -53,9 +53,10 @@ Crie ícones de 16x16, 48x48 e 128x128 pixels usando qualquer editor de imagens 
 
 ### Formatar Moeda
 1. Clique no cabeçalho da coluna que deseja formatar (o cabeçalho ficará destacado em roxo)
-2. Selecione o formato de moeda desejado no menu dropdown
-3. Clique em "Aplicar Formato na Coluna Selecionada"
-4. A formatação será aplicada a todas as células numéricas da coluna selecionada
+2. Selecione o formato de entrada (ex.: $1,234.56 ou R$ 1.234,56)
+3. Selecione o formato de moeda desejado no menu dropdown
+4. Clique em "Aplicar Formato na Coluna Selecionada"
+5. A formatação será aplicada a todas as células numéricas da coluna selecionada
 
 ### Soma de Colunas
 - A soma de cada coluna é calculada automaticamente

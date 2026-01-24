@@ -2,6 +2,7 @@
 let csvData = [];
 let headers = [];
 let currencyFormat = 'pt-BR';
+let sourceFormat = 'auto';
 let selectedColumnIndex = null;
 
 // Elementos DOM
@@ -14,6 +15,7 @@ const tableBody = document.getElementById('tableBody');
 const tableFoot = document.getElementById('tableFoot');
 const downloadBtn = document.getElementById('downloadBtn');
 const newFileBtn = document.getElementById('newFileBtn');
+const sourceFormatSelect = document.getElementById('sourceFormat');
 const currencyFormatSelect = document.getElementById('currencyFormat');
 const formatCurrencyBtn = document.getElementById('formatCurrencyBtn');
 
@@ -35,9 +37,22 @@ chrome.storage.local.get(['currencyFormat'], (result) => {
   }
 });
 
+// Carregar formato de entrada salvo
+chrome.storage.local.get(['sourceFormat'], (result) => {
+  if (result.sourceFormat) {
+    sourceFormat = result.sourceFormat;
+    sourceFormatSelect.value = sourceFormat;
+  }
+});
+
 currencyFormatSelect.addEventListener('change', (e) => {
   currencyFormat = e.target.value;
   chrome.storage.local.set({ currencyFormat });
+});
+
+sourceFormatSelect.addEventListener('change', (e) => {
+  sourceFormat = e.target.value;
+  chrome.storage.local.set({ sourceFormat });
 });
 
 // Funções de Drag and Drop
@@ -225,13 +240,8 @@ function calculateColumnSum(columnIndex) {
   csvData.forEach(row => {
     const value = row[columnIndex];
     if (value) {
-      // Remover formatação de moeda e converter para número
-      const cleanValue = value.toString()
-        .replace(/[^\d.,-]/g, '')
-        .replace(/\./g, '')
-        .replace(',', '.');
-      const num = parseFloat(cleanValue);
-      if (!isNaN(num)) {
+      const num = parseNumber(value, sourceFormat);
+      if (num !== null) {
         sum += num;
         hasNumbers = true;
       }
@@ -250,6 +260,57 @@ function formatNumber(num) {
   }).format(num);
 }
 
+function parseNumber(value, format) {
+  if (value === null || value === undefined) return null;
+  let str = value.toString().trim();
+  if (!str) return null;
+
+  let negative = false;
+  if (str.includes('(') && str.includes(')')) negative = true;
+  if (str.includes('-')) negative = true;
+
+  str = str.replace(/[^\d.,]/g, '');
+  if (!str) return null;
+
+  let normalized = str;
+  if (format === 'en-US') {
+    normalized = str.replace(/,/g, '');
+  } else if (format === 'pt-BR') {
+    normalized = str.replace(/\./g, '').replace(',', '.');
+  } else {
+    const hasDot = str.includes('.');
+    const hasComma = str.includes(',');
+
+    if (hasDot && hasComma) {
+      const decimalSep = str.lastIndexOf('.') > str.lastIndexOf(',') ? '.' : ',';
+      const thousandsSep = decimalSep === '.' ? ',' : '.';
+      normalized = str.replace(new RegExp(`\\${thousandsSep}`, 'g'), '');
+      normalized = normalized.replace(decimalSep, '.');
+    } else if (hasDot || hasComma) {
+      const sep = hasDot ? '.' : ',';
+      const parts = str.split(sep);
+      if (parts.length > 2) {
+        normalized = parts.join('');
+      } else {
+        const frac = parts[1] || '';
+        if (frac.length === 0) {
+          normalized = parts[0];
+        } else if (frac.length === 1 || frac.length === 2) {
+          normalized = `${parts[0]}.${frac}`;
+        } else if (frac.length === 3) {
+          normalized = parts.join('');
+        } else {
+          normalized = `${parts[0]}.${frac}`;
+        }
+      }
+    }
+  }
+
+  const num = parseFloat(normalized);
+  if (isNaN(num)) return null;
+  return negative ? -Math.abs(num) : num;
+}
+
 // Aplicar formato de moeda
 function applyCurrencyFormat() {
   if (selectedColumnIndex === null) {
@@ -263,12 +324,8 @@ function applyCurrencyFormat() {
   csvData.forEach((row, rowIndex) => {
     const value = row[colIdx];
     if (value) {
-      const cleanValue = value.toString()
-        .replace(/[^\d.,-]/g, '')
-        .replace(/\./g, '')
-        .replace(',', '.');
-      const num = parseFloat(cleanValue);
-      if (!isNaN(num)) {
+      const num = parseNumber(value, sourceFormat);
+      if (num !== null) {
         row[colIdx] = formatNumber(num);
         const cell = document.querySelector(`td[data-row-index="${rowIndex}"][data-column-index="${colIdx}"]`);
         if (cell) {
