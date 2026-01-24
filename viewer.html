@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV Viewer & Editor</title>
+  <link rel="stylesheet" href="viewer.css">
+</head>
+<body>
+  <div class="container">
+    <div id="dropZone" class="drop-zone">
+      <div class="drop-zone-content">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <h2>Arraste um arquivo CSV aqui</h2>
+        <p>ou clique para selecionar</p>
+        <input type="file" id="fileInput" accept=".csv" style="display: none;">
+      </div>
+    </div>
+
+    <div id="editorContainer" class="editor-container" style="display: none;">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button id="newFileBtn" class="btn btn-secondary">Novo Arquivo</button>
+          <button id="downloadBtn" class="btn btn-primary">Download CSV</button>
+        </div>
+        <div class="toolbar-right">
+          <label class="currency-label">
+            Formato de Moeda:
+            <select id="currencyFormat" class="currency-select">
+              <option value="pt-BR">R$ 1.234,56</option>
+              <option value="en-US">$1,234.56</option>
+              <option value="en-GB">£1,234.56</option>
+              <option value="de-DE">1.234,56 €</option>
+              <option value="ja-JP">¥1,234</option>
+            </select>
+          </label>
+          <button id="formatCurrencyBtn" class="btn btn-secondary">Aplicar Formato na Coluna Selecionada</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table id="csvTable" class="csv-table">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+          <tfoot id="tableFoot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="viewer.js"></script>
+</body>
+</html>
