@@ -5,6 +5,8 @@ let currencyFormat = 'pt-BR';
 let sourceFormat = 'auto';
 let selectedColumnIndexes = [];
 let lastSelectedIndex = null;
+let isMouseSelecting = false;
+let selectionStartIndex = null;
 
 // Elementos DOM
 const dropZone = document.getElementById('dropZone');
@@ -31,6 +33,12 @@ downloadBtn.addEventListener('click', downloadCSV);
 downloadExcelBtn.addEventListener('click', downloadExcel);
 newFileBtn.addEventListener('click', resetEditor);
 formatCurrencyBtn.addEventListener('click', applyCurrencyFormat);
+document.addEventListener('mouseup', () => {
+  if (isMouseSelecting) {
+    isMouseSelecting = false;
+    selectionStartIndex = null;
+  }
+});
 
 // Carregar formato de moeda salvo
 chrome.storage.local.get(['currencyFormat'], (result) => {
@@ -167,8 +175,22 @@ function renderTable() {
     th.textContent = header || `Coluna ${index + 1}`;
     th.dataset.columnIndex = index;
     th.classList.add('column-header');
-    th.addEventListener('click', (e) => {
-      handleColumnSelection(e, index, th);
+    th.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      if (e.ctrlKey || e.metaKey || e.shiftKey) {
+        handleColumnSelection(e, index, th);
+        return;
+      }
+
+      e.preventDefault();
+      isMouseSelecting = true;
+      selectionStartIndex = index;
+      setColumnSelectionRange(selectionStartIndex, index);
+      lastSelectedIndex = index;
+    });
+    th.addEventListener('mouseenter', () => {
+      if (!isMouseSelecting || selectionStartIndex === null) return;
+      setColumnSelectionRange(selectionStartIndex, index);
     });
     headerRow.appendChild(th);
   });
@@ -355,6 +377,23 @@ function handleColumnSelection(e, columnIndex, thElement) {
     lastSelectedIndex = columnIndex;
   }
   
+  updateSelectionIndicator();
+}
+
+function setColumnSelectionRange(startIndex, endIndex) {
+  const start = Math.min(startIndex, endIndex);
+  const end = Math.max(startIndex, endIndex);
+  selectedColumnIndexes = [];
+
+  document.querySelectorAll('th.column-header').forEach((th, idx) => {
+    if (idx >= start && idx <= end) {
+      selectedColumnIndexes.push(idx);
+      th.classList.add('selected');
+    } else {
+      th.classList.remove('selected');
+    }
+  });
+
   updateSelectionIndicator();
 }
 
