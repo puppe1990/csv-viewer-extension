@@ -8,6 +8,7 @@ Uma extensão do Chrome que permite visualizar e editar arquivos CSV com funcion
 - ✏️ **Edição Tipo Excel**: Clique em qualquer célula para editar
 - ➕ **Soma Automática**: Soma automática de colunas numéricas exibida no rodapé
 - 💰 **Formatação de Moeda**: Aplique formatos de moeda em diferentes localidades (R$, $, £, €, ¥)
+- 📄 **Exportar para Excel**: Baixe a tabela como arquivo Excel (.xlsx)
 - 💾 **Download**: Baixe o arquivo CSV editado
 - 🎨 **Interface Moderna**: Design limpo e responsivo
 

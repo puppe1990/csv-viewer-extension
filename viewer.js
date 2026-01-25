@@ -15,6 +15,7 @@ const tableHead = document.getElementById('tableHead');
 const tableBody = document.getElementById('tableBody');
 const tableFoot = document.getElementById('tableFoot');
 const downloadBtn = document.getElementById('downloadBtn');
+const downloadExcelBtn = document.getElementById('downloadExcelBtn');
 const newFileBtn = document.getElementById('newFileBtn');
 const sourceFormatSelect = document.getElementById('sourceFormat');
 const currencyFormatSelect = document.getElementById('currencyFormat');
@@ -27,6 +28,7 @@ dropZone.addEventListener('dragleave', handleDragLeave);
 dropZone.addEventListener('drop', handleDrop);
 fileInput.addEventListener('change', handleFileSelect);
 downloadBtn.addEventListener('click', downloadCSV);
+downloadExcelBtn.addEventListener('click', downloadExcel);
 newFileBtn.addEventListener('click', resetEditor);
 formatCurrencyBtn.addEventListener('click', applyCurrencyFormat);
 
@@ -421,6 +423,48 @@ function downloadCSV() {
   
   link.setAttribute('href', url);
   link.setAttribute('download', 'edited_file.csv');
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function isNumberValue(value) {
+  const num = parseNumber(value, sourceFormat);
+  return num !== null;
+}
+
+// Download Excel (.xlsx) using SheetJS
+function downloadExcel() {
+  if (!window.XLSX) {
+    alert('Biblioteca XLSX não encontrada.');
+    return;
+  }
+
+  const data = [headers.map(h => h || '')];
+  csvData.forEach(row => {
+    const normalized = headers.map((_, idx) => {
+      const raw = row[idx] || '';
+      if (isNumberValue(raw)) {
+        return parseNumber(raw, sourceFormat);
+      }
+      return raw.toString();
+    });
+    data.push(normalized);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+
+  const arrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([arrayBuffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'edited_file.xlsx');
   link.style.visibility = 'hidden';
   document.body.appendChild(link);
   link.click();
