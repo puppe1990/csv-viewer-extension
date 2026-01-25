@@ -249,7 +249,7 @@ function updateSums() {
     const td = document.createElement('td');
     const sum = calculateColumnSum(colIndex);
     td.className = 'sum-cell';
-    td.textContent = sum !== null ? formatNumber(sum) : '';
+    td.textContent = sum !== null ? formatNumber(sum, 2) : '';
     footerRow.appendChild(td);
   });
   
@@ -276,12 +276,46 @@ function calculateColumnSum(columnIndex) {
 }
 
 // Formatar número
-function formatNumber(num) {
+function formatNumber(num, decimals = 2) {
   if (num === null || isNaN(num)) return '';
   return new Intl.NumberFormat(currencyFormat, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
   }).format(num);
+}
+
+function getDecimalCount(value, format) {
+  if (value === null || value === undefined) return 0;
+  const raw = value.toString().trim();
+  if (!raw) return 0;
+
+  const cleaned = raw.replace(/[^\d.,]/g, '');
+  if (!cleaned) return 0;
+
+  if (format === 'en-US') {
+    const idx = cleaned.lastIndexOf('.');
+    if (idx === -1) return 0;
+    return cleaned.slice(idx + 1).replace(/[^\d]/g, '').length;
+  }
+
+  if (format === 'pt-BR') {
+    const idx = cleaned.lastIndexOf(',');
+    if (idx === -1) return 0;
+    return cleaned.slice(idx + 1).replace(/[^\d]/g, '').length;
+  }
+
+  const lastDot = cleaned.lastIndexOf('.');
+  const lastComma = cleaned.lastIndexOf(',');
+  if (lastDot === -1 && lastComma === -1) return 0;
+
+  const decimalSep = lastDot > lastComma ? '.' : ',';
+  const idx = cleaned.lastIndexOf(decimalSep);
+  const frac = cleaned.slice(idx + 1).replace(/[^\d]/g, '');
+  const intPart = cleaned.slice(0, idx).replace(/[^\d]/g, '');
+
+  if (frac.length === 0) return 0;
+  if (frac.length === 3 && intPart.length > 0) return 0;
+  return frac.length;
 }
 
 function parseNumber(value, format) {
@@ -424,7 +458,8 @@ function applyCurrencyFormat() {
       if (value) {
         const num = parseNumber(value, sourceFormat);
         if (num !== null) {
-          row[colIdx] = formatNumber(num);
+          const decimals = getDecimalCount(value, sourceFormat);
+          row[colIdx] = formatNumber(num, decimals);
           const cell = document.querySelector(`td[data-row-index="${rowIndex}"][data-column-index="${colIdx}"]`);
           if (cell) {
             cell.textContent = row[colIdx];
