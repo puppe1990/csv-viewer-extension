@@ -59,19 +59,19 @@ sourceFormatSelect.addEventListener('change', (e) => {
 function handleDragOver(e) {
   e.preventDefault();
   e.stopPropagation();
-  dropZone.classList.add('drag-over');
+  dropZone.classList.add('scale-105');
 }
 
 function handleDragLeave(e) {
   e.preventDefault();
   e.stopPropagation();
-  dropZone.classList.remove('drag-over');
+  dropZone.classList.remove('scale-105');
 }
 
 function handleDrop(e) {
   e.preventDefault();
   e.stopPropagation();
-  dropZone.classList.remove('drag-over');
+  dropZone.classList.remove('scale-105');
 
   const files = e.dataTransfer.files;
   if (files.length > 0 && files[0].type === 'text/csv' || files[0].name.endsWith('.csv')) {
@@ -95,8 +95,9 @@ function processFile(file) {
     const text = e.target.result;
     parseCSV(text);
     renderTable();
-    dropZone.style.display = 'none';
-    editorContainer.style.display = 'flex';
+    dropZone.classList.add('hidden');
+    editorContainer.classList.remove('hidden');
+    editorContainer.classList.add('flex');
   };
   reader.readAsText(file, 'UTF-8');
 }
@@ -162,12 +163,15 @@ function renderTable() {
     const th = document.createElement('th');
     th.textContent = header || `Coluna ${index + 1}`;
     th.dataset.columnIndex = index;
-    th.classList.add('column-header');
+    th.className = 'px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors min-w-[120px]';
     th.addEventListener('click', () => {
       // Remover seleção anterior
-      document.querySelectorAll('th.column-header').forEach(h => h.classList.remove('selected'));
+      document.querySelectorAll('th').forEach(h => {
+        h.classList.remove('header-selected');
+        h.className = 'px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors min-w-[120px]';
+      });
       // Selecionar nova coluna
-      th.classList.add('selected');
+      th.classList.add('header-selected');
       selectedColumnIndex = index;
     });
     headerRow.appendChild(th);
@@ -177,10 +181,11 @@ function renderTable() {
   // Corpo da tabela
   csvData.forEach((row, rowIndex) => {
     const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-50 border-b border-gray-100';
     headers.forEach((_, colIndex) => {
       const td = document.createElement('td');
       td.contentEditable = true;
-      td.className = 'editable';
+      td.className = 'px-4 py-3 text-sm text-gray-900 border-r border-gray-100 cell-editable min-w-[120px]';
       td.textContent = row[colIndex] || '';
       td.dataset.rowIndex = rowIndex;
       td.dataset.columnIndex = colIndex;
@@ -224,7 +229,7 @@ function updateSums() {
   headers.forEach((_, colIndex) => {
     const td = document.createElement('td');
     const sum = calculateColumnSum(colIndex);
-    td.className = 'sum-cell';
+    td.className = 'px-4 py-3 text-sm font-semibold text-blue-600 text-right border-r border-gray-200 bg-gray-50 min-w-[120px]';
     td.textContent = sum !== null ? formatNumber(sum) : '';
     footerRow.appendChild(td);
   });
@@ -368,8 +373,9 @@ function resetEditor() {
   if (confirm('Deseja criar um novo arquivo? Os dados atuais serão perdidos.')) {
     csvData = [];
     headers = [];
-    editorContainer.style.display = 'none';
-    dropZone.style.display = 'flex';
+    editorContainer.classList.add('hidden');
+    editorContainer.classList.remove('flex');
+    dropZone.classList.remove('hidden');
     fileInput.value = '';
   }
 }
