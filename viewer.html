@@ -4,80 +4,58 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CSV Viewer & Editor</title>
-  <link rel="stylesheet" href="tailwind.css">
+  <link rel="stylesheet" href="viewer.css">
 </head>
-<body class="h-screen overflow-hidden bg-gray-50">
-  <!-- Drop Zone -->
-  <div id="dropZone" class="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 cursor-pointer transition-all duration-300 z-50">
-    <div class="text-center text-white px-8">
-      <svg class="w-16 h-16 mx-auto mb-4 opacity-90" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="17 8 12 3 7 8"></polyline>
-        <line x1="12" y1="3" x2="12" y2="15"></line>
-      </svg>
-      <h2 class="text-3xl font-semibold mb-2">Arraste um arquivo CSV aqui</h2>
-      <p class="text-lg opacity-90">ou clique para selecionar</p>
-      <input type="file" id="fileInput" accept=".csv" class="hidden">
-    </div>
-  </div>
-
-  <!-- Editor Container -->
-  <div id="editorContainer" class="h-screen flex flex-col bg-white hidden">
-    <!-- Toolbar -->
-      <div class="bg-white border-b border-gray-200 shadow-sm px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <button id="newFileBtn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors">
-          Novo Arquivo
-        </button>
-        <button id="downloadBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm">
-          <span class="flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-            </svg>
-            Download CSV
-          </span>
-        </button>
-        <button id="downloadExcelBtn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors shadow-sm">
-          <span class="flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-            </svg>
-            Download Excel
-          </span>
-        </button>
-      </div>
-      <div class="flex items-center gap-4">
-        <label class="flex items-center gap-2 text-sm text-gray-700">
-          <span class="font-medium">Formato de Entrada:</span>
-          <select id="sourceFormat" class="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
-            <option value="auto">Auto</option>
-            <option value="en-US">$1,234.56</option>
-            <option value="pt-BR">R$ 1.234,56</option>
-          </select>
-        </label>
-        <label class="flex items-center gap-2 text-sm text-gray-700">
-          <span class="font-medium">Formato de Moeda:</span>
-          <select id="currencyFormat" class="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
-            <option value="pt-BR">R$ 1.234,56</option>
-            <option value="en-US">$1,234.56</option>
-            <option value="en-GB">£1,234.56</option>
-            <option value="de-DE">1.234,56 €</option>
-            <option value="ja-JP">¥1,234</option>
-          </select>
-        </label>
-        <button id="formatCurrencyBtn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors text-sm">
-          Aplicar Formato
-        </button>
+<body>
+  <div class="container">
+    <div id="dropZone" class="drop-zone">
+      <div class="drop-zone-content">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <h2>Arraste um arquivo CSV aqui</h2>
+        <p>ou clique para selecionar</p>
+        <input type="file" id="fileInput" accept=".csv" style="display: none;">
       </div>
     </div>
 
-    <!-- Table Container -->
-    <div class="table-container flex-1 overflow-auto bg-gray-50 p-4">
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table id="csvTable" class="w-full border-collapse">
-          <thead id="tableHead" class="bg-gray-50 sticky top-0 z-10"></thead>
-          <tbody id="tableBody" class="bg-white"></tbody>
-          <tfoot id="tableFoot" class="bg-gray-50 border-t-2 border-blue-500"></tfoot>
+    <div id="editorContainer" class="editor-container" style="display: none;">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button id="newFileBtn" class="btn btn-secondary">Novo Arquivo</button>
+          <button id="downloadBtn" class="btn btn-primary">Download CSV</button>
+          <button id="downloadExcelBtn" class="btn btn-secondary">Download Excel</button>
+        </div>
+        <div class="toolbar-right">
+          <label class="currency-label">
+            Formato de Entrada:
+            <select id="sourceFormat" class="currency-select">
+              <option value="auto">Auto</option>
+              <option value="en-US">$1,234.56</option>
+              <option value="pt-BR">R$ 1.234,56</option>
+            </select>
+          </label>
+          <label class="currency-label">
+            Formato de Moeda:
+            <select id="currencyFormat" class="currency-select">
+              <option value="pt-BR">R$ 1.234,56</option>
+              <option value="en-US">$1,234.56</option>
+              <option value="en-GB">£1,234.56</option>
+              <option value="de-DE">1.234,56 €</option>
+              <option value="ja-JP">¥1,234</option>
+            </select>
+          </label>
+          <button id="formatCurrencyBtn" class="btn btn-secondary">Aplicar Formato na Coluna Selecionada</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table id="csvTable" class="csv-table">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+          <tfoot id="tableFoot"></tfoot>
         </table>
       </div>
     </div>

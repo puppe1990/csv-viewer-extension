@@ -62,19 +62,19 @@ sourceFormatSelect.addEventListener('change', (e) => {
 function handleDragOver(e) {
   e.preventDefault();
   e.stopPropagation();
-  dropZone.classList.add('scale-105');
+  dropZone.classList.add('drag-over');
 }
 
 function handleDragLeave(e) {
   e.preventDefault();
   e.stopPropagation();
-  dropZone.classList.remove('scale-105');
+  dropZone.classList.remove('drag-over');
 }
 
 function handleDrop(e) {
   e.preventDefault();
   e.stopPropagation();
-  dropZone.classList.remove('scale-105');
+  dropZone.classList.remove('drag-over');
 
   const files = e.dataTransfer.files;
   if (files.length > 0 && files[0].type === 'text/csv' || files[0].name.endsWith('.csv')) {
@@ -98,9 +98,8 @@ function processFile(file) {
     const text = e.target.result;
     parseCSV(text);
     renderTable();
-    dropZone.classList.add('hidden');
-    editorContainer.classList.remove('hidden');
-    editorContainer.classList.add('flex');
+    dropZone.style.display = 'none';
+    editorContainer.style.display = 'flex';
   };
   reader.readAsText(file, 'UTF-8');
 }
@@ -167,7 +166,7 @@ function renderTable() {
     const th = document.createElement('th');
     th.textContent = header || `Coluna ${index + 1}`;
     th.dataset.columnIndex = index;
-    th.className = 'px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors min-w-[120px]';
+    th.classList.add('column-header');
     th.addEventListener('click', (e) => {
       handleColumnSelection(e, index, th);
     });
@@ -183,7 +182,7 @@ function renderTable() {
     headers.forEach((_, colIndex) => {
       const td = document.createElement('td');
       td.contentEditable = true;
-      td.className = 'px-4 py-3 text-sm text-gray-900 border-r border-gray-100 cell-editable min-w-[120px]';
+      td.className = 'editable';
       td.textContent = row[colIndex] || '';
       td.dataset.rowIndex = rowIndex;
       td.dataset.columnIndex = colIndex;
@@ -227,7 +226,7 @@ function updateSums() {
   headers.forEach((_, colIndex) => {
     const td = document.createElement('td');
     const sum = calculateColumnSum(colIndex);
-    td.className = 'px-4 py-3 text-sm font-semibold text-blue-600 text-right border-r border-gray-200 bg-gray-50 min-w-[120px]';
+    td.className = 'sum-cell';
     td.textContent = sum !== null ? formatNumber(sum) : '';
     footerRow.appendChild(td);
   });
@@ -316,20 +315,17 @@ function parseNumber(value, format) {
 
 // Função para lidar com seleção de colunas (suporta múltipla seleção)
 function handleColumnSelection(e, columnIndex, thElement) {
-  const baseClasses = 'px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors min-w-[120px]';
-  
   if (e.ctrlKey || e.metaKey) {
     // Ctrl/Cmd + Click: adicionar/remover da seleção
     const index = selectedColumnIndexes.indexOf(columnIndex);
     if (index > -1) {
       // Remover da seleção
       selectedColumnIndexes.splice(index, 1);
-      thElement.classList.remove('header-selected');
-      thElement.className = baseClasses;
+      thElement.classList.remove('selected');
     } else {
       // Adicionar à seleção
       selectedColumnIndexes.push(columnIndex);
-      thElement.classList.add('header-selected');
+      thElement.classList.add('selected');
     }
     lastSelectedIndex = columnIndex;
   } else if (e.shiftKey && lastSelectedIndex !== null) {
@@ -338,24 +334,22 @@ function handleColumnSelection(e, columnIndex, thElement) {
     const end = Math.max(lastSelectedIndex, columnIndex);
     selectedColumnIndexes = [];
     
-    document.querySelectorAll('th').forEach((th, idx) => {
+    document.querySelectorAll('th.column-header').forEach((th, idx) => {
       if (idx >= start && idx <= end) {
         selectedColumnIndexes.push(idx);
-        th.classList.add('header-selected');
+        th.classList.add('selected');
       } else {
-        th.classList.remove('header-selected');
-        th.className = baseClasses;
+        th.classList.remove('selected');
       }
     });
   } else {
     // Click simples: selecionar apenas esta coluna
     selectedColumnIndexes = [columnIndex];
-    document.querySelectorAll('th').forEach((th, idx) => {
+    document.querySelectorAll('th.column-header').forEach((th, idx) => {
       if (idx === columnIndex) {
-        th.classList.add('header-selected');
+        th.classList.add('selected');
       } else {
-        th.classList.remove('header-selected');
-        th.className = baseClasses;
+        th.classList.remove('selected');
       }
     });
     lastSelectedIndex = columnIndex;
@@ -478,9 +472,8 @@ function resetEditor() {
     headers = [];
     selectedColumnIndexes = [];
     lastSelectedIndex = null;
-    editorContainer.classList.add('hidden');
-    editorContainer.classList.remove('flex');
-    dropZone.classList.remove('hidden');
+    editorContainer.style.display = 'none';
+    dropZone.style.display = 'flex';
     fileInput.value = '';
   }
 }
