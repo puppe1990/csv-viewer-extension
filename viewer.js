@@ -3,7 +3,8 @@ let csvData = [];
 let headers = [];
 let currencyFormat = 'pt-BR';
 let sourceFormat = 'auto';
-let selectedColumnIndex = null;
+let selectedColumnIndexes = [];
+let lastSelectedIndex = null;
 
 // Elementos DOM
 const dropZone = document.getElementById('dropZone');
@@ -155,7 +156,8 @@ function renderTable() {
   tableHead.innerHTML = '';
   tableBody.innerHTML = '';
   tableFoot.innerHTML = '';
-  selectedColumnIndex = null;
+  selectedColumnIndexes = [];
+  lastSelectedIndex = null;
 
   // Cabeçalho
   const headerRow = document.createElement('tr');
@@ -164,19 +166,13 @@ function renderTable() {
     th.textContent = header || `Coluna ${index + 1}`;
     th.dataset.columnIndex = index;
     th.className = 'px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors min-w-[120px]';
-    th.addEventListener('click', () => {
-      // Remover seleção anterior
-      document.querySelectorAll('th').forEach(h => {
-        h.classList.remove('header-selected');
-        h.className = 'px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors min-w-[120px]';
-      });
-      // Selecionar nova coluna
-      th.classList.add('header-selected');
-      selectedColumnIndex = index;
+    th.addEventListener('click', (e) => {
+      handleColumnSelection(e, index, th);
     });
     headerRow.appendChild(th);
   });
   tableHead.appendChild(headerRow);
+  updateSelectionIndicator();
 
   // Corpo da tabela
   csvData.forEach((row, rowIndex) => {
@@ -316,28 +312,91 @@ function parseNumber(value, format) {
   return negative ? -Math.abs(num) : num;
 }
 
+// Função para lidar com seleção de colunas (suporta múltipla seleção)
+function handleColumnSelection(e, columnIndex, thElement) {
+  const baseClasses = 'px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-b border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors min-w-[120px]';
+  
+  if (e.ctrlKey || e.metaKey) {
+    // Ctrl/Cmd + Click: adicionar/remover da seleção
+    const index = selectedColumnIndexes.indexOf(columnIndex);
+    if (index > -1) {
+      // Remover da seleção
+      selectedColumnIndexes.splice(index, 1);
+      thElement.classList.remove('header-selected');
+      thElement.className = baseClasses;
+    } else {
+      // Adicionar à seleção
+      selectedColumnIndexes.push(columnIndex);
+      thElement.classList.add('header-selected');
+    }
+    lastSelectedIndex = columnIndex;
+  } else if (e.shiftKey && lastSelectedIndex !== null) {
+    // Shift + Click: selecionar range
+    const start = Math.min(lastSelectedIndex, columnIndex);
+    const end = Math.max(lastSelectedIndex, columnIndex);
+    selectedColumnIndexes = [];
+    
+    document.querySelectorAll('th').forEach((th, idx) => {
+      if (idx >= start && idx <= end) {
+        selectedColumnIndexes.push(idx);
+        th.classList.add('header-selected');
+      } else {
+        th.classList.remove('header-selected');
+        th.className = baseClasses;
+      }
+    });
+  } else {
+    // Click simples: selecionar apenas esta coluna
+    selectedColumnIndexes = [columnIndex];
+    document.querySelectorAll('th').forEach((th, idx) => {
+      if (idx === columnIndex) {
+        th.classList.add('header-selected');
+      } else {
+        th.classList.remove('header-selected');
+        th.className = baseClasses;
+      }
+    });
+    lastSelectedIndex = columnIndex;
+  }
+  
+  updateSelectionIndicator();
+}
+
+// Atualizar indicador de seleção
+function updateSelectionIndicator() {
+  const count = selectedColumnIndexes.length;
+  const btn = formatCurrencyBtn;
+  if (count === 0) {
+    btn.textContent = 'Aplicar Formato';
+  } else if (count === 1) {
+    btn.textContent = 'Aplicar Formato (1 coluna)';
+  } else {
+    btn.textContent = `Aplicar Formato (${count} colunas)`;
+  }
+}
+
 // Aplicar formato de moeda
 function applyCurrencyFormat() {
-  if (selectedColumnIndex === null) {
-    alert('Por favor, clique no cabeçalho da coluna que deseja formatar primeiro!');
+  if (selectedColumnIndexes.length === 0) {
+    alert('Por favor, selecione uma ou mais colunas clicando nos cabeçalhos!\n\nDica: Use Ctrl+Click para selecionar múltiplas colunas ou Shift+Click para selecionar um intervalo.');
     return;
   }
 
-  const colIdx = selectedColumnIndex;
-
-  // Formatar todas as células da coluna
-  csvData.forEach((row, rowIndex) => {
-    const value = row[colIdx];
-    if (value) {
-      const num = parseNumber(value, sourceFormat);
-      if (num !== null) {
-        row[colIdx] = formatNumber(num);
-        const cell = document.querySelector(`td[data-row-index="${rowIndex}"][data-column-index="${colIdx}"]`);
-        if (cell) {
-          cell.textContent = row[colIdx];
+  // Formatar todas as colunas selecionadas
+  selectedColumnIndexes.forEach(colIdx => {
+    csvData.forEach((row, rowIndex) => {
+      const value = row[colIdx];
+      if (value) {
+        const num = parseNumber(value, sourceFormat);
+        if (num !== null) {
+          row[colIdx] = formatNumber(num);
+          const cell = document.querySelector(`td[data-row-index="${rowIndex}"][data-column-index="${colIdx}"]`);
+          if (cell) {
+            cell.textContent = row[colIdx];
+          }
         }
       }
-    }
+    });
   });
 
   updateSums();
@@ -373,6 +432,8 @@ function resetEditor() {
   if (confirm('Deseja criar um novo arquivo? Os dados atuais serão perdidos.')) {
     csvData = [];
     headers = [];
+    selectedColumnIndexes = [];
+    lastSelectedIndex = null;
     editorContainer.classList.add('hidden');
     editorContainer.classList.remove('flex');
     dropZone.classList.remove('hidden');
