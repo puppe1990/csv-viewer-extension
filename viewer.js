@@ -204,6 +204,13 @@ function renderTable() {
       }
 
       e.preventDefault();
+      if (selectedColumnIndexes.length === 1 && selectedColumnIndexes[0] === index) {
+        selectedColumnIndexes = [];
+        th.classList.remove('selected');
+        lastSelectedIndex = null;
+        updateSelectionIndicator();
+        return;
+      }
       isMouseSelecting = true;
       selectionStartIndex = index;
       setColumnSelectionRange(selectionStartIndex, index);

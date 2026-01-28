@@ -187,6 +187,12 @@ function renderTable() {
     th.dataset.columnIndex = index;
     th.classList.add('column-header');
     th.addEventListener('click', () => {
+      if (selectedColumnIndex === index) {
+        th.classList.remove('selected');
+        selectedColumnIndex = null;
+        return;
+      }
+
       // Remover seleção anterior
       document.querySelectorAll('th.column-header').forEach(h => h.classList.remove('selected'));
       // Selecionar nova coluna
