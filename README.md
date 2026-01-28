@@ -42,7 +42,7 @@ Crie ícones de 16x16, 48x48 e 128x128 pixels usando qualquer editor de imagens 
 1. Clique no ícone da extensão na barra de ferramentas
 2. Arraste um arquivo CSV para a área de drop ou clique para selecionar
 3. Edite as células clicando nelas
-4. Use o botão "Aplicar Formato" para formatar colunas como moeda
+4. Use o botão "Converter Colunas" para formatar colunas como moeda
 5. Baixe o arquivo editado usando o botão "Download CSV"
 
 ## Como Usar
@@ -53,11 +53,12 @@ Crie ícones de 16x16, 48x48 e 128x128 pixels usando qualquer editor de imagens 
 - As alterações são salvas automaticamente
 
 ### Formatar Moeda
-1. Clique no cabeçalho da coluna que deseja formatar (o cabeçalho ficará destacado em roxo)
+1. (Opcional) Clique no cabeçalho de uma ou mais colunas para pré-selecionar
 2. Selecione o formato de entrada (ex.: $1,234.56 ou R$ 1.234,56)
 3. Selecione o formato de moeda desejado no menu dropdown
-4. Clique em "Aplicar Formato na Coluna Selecionada"
-5. A formatação será aplicada a todas as células numéricas da coluna selecionada
+4. Clique em "Converter Colunas"
+5. Na modal, marque as colunas que deseja converter e confirme
+6. A formatação será aplicada a todas as células numéricas das colunas selecionadas
 
 ### Soma de Colunas
 - A soma de cada coluna é calculada automaticamente

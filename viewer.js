@@ -7,6 +7,7 @@ let selectedColumnIndexes = [];
 let lastSelectedIndex = null;
 let isMouseSelecting = false;
 let selectionStartIndex = null;
+let columnFilters = [];
 
 // Elementos DOM
 const dropZone = document.getElementById('dropZone');
@@ -21,7 +22,14 @@ const downloadExcelBtn = document.getElementById('downloadExcelBtn');
 const newFileBtn = document.getElementById('newFileBtn');
 const sourceFormatSelect = document.getElementById('sourceFormat');
 const currencyFormatSelect = document.getElementById('currencyFormat');
-const formatCurrencyBtn = document.getElementById('formatCurrencyBtn');
+const convertColumnBtn = document.getElementById('convertColumnBtn');
+const convertModal = document.getElementById('convertModal');
+const convertFieldsList = document.getElementById('convertFieldsList');
+const convertModalClose = document.getElementById('convertModalClose');
+const convertCancelBtn = document.getElementById('convertCancelBtn');
+const convertApplyBtn = document.getElementById('convertApplyBtn');
+const convertSelectAll = document.getElementById('convertSelectAll');
+const convertClearAll = document.getElementById('convertClearAll');
 
 // Event Listeners
 dropZone.addEventListener('click', () => fileInput.click());
@@ -32,7 +40,15 @@ fileInput.addEventListener('change', handleFileSelect);
 downloadBtn.addEventListener('click', downloadCSV);
 downloadExcelBtn.addEventListener('click', downloadExcel);
 newFileBtn.addEventListener('click', resetEditor);
-formatCurrencyBtn.addEventListener('click', applyCurrencyFormat);
+convertColumnBtn.addEventListener('click', openConvertModal);
+convertModalClose.addEventListener('click', closeConvertModal);
+convertCancelBtn.addEventListener('click', closeConvertModal);
+convertApplyBtn.addEventListener('click', applyConvertModal);
+convertSelectAll.addEventListener('click', () => toggleAllFields(true));
+convertClearAll.addEventListener('click', () => toggleAllFields(false));
+convertModal.addEventListener('click', (e) => {
+  if (e.target.dataset.close) closeConvertModal();
+});
 document.addEventListener('mouseup', () => {
   if (isMouseSelecting) {
     isMouseSelecting = false;
@@ -122,6 +138,7 @@ function parseCSV(text) {
   
   headers = parseCSVLine(lines[0], delimiter);
   csvData = [];
+  columnFilters = Array(headers.length).fill('');
 
   for (let i = 1; i < lines.length; i++) {
     const row = parseCSVLine(lines[i], delimiter);
@@ -197,6 +214,24 @@ function renderTable() {
   tableHead.appendChild(headerRow);
   updateSelectionIndicator();
 
+  const filterRow = document.createElement('tr');
+  filterRow.classList.add('column-filter-row');
+  headers.forEach((_, index) => {
+    const th = document.createElement('th');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'column-filter';
+    input.placeholder = 'Filtrar...';
+    input.value = columnFilters[index] || '';
+    input.addEventListener('input', (e) => {
+      columnFilters[index] = e.target.value;
+      applyFilters();
+    });
+    th.appendChild(input);
+    filterRow.appendChild(th);
+  });
+  tableHead.appendChild(filterRow);
+
   // Corpo da tabela
   csvData.forEach((row, rowIndex) => {
     const tr = document.createElement('tr');
@@ -217,6 +252,7 @@ function renderTable() {
           csvData[rIdx][cIdx] = e.target.textContent;
         }
         updateSums();
+        applyFilters();
       });
 
       // Enter para próxima célula
@@ -238,6 +274,21 @@ function renderTable() {
 
   // Rodapé com somas
   updateSums();
+  applyFilters();
+}
+
+function applyFilters() {
+  const rows = tableBody.querySelectorAll('tr');
+  rows.forEach((tr) => {
+    const rowIndex = parseInt(tr.children[0]?.dataset.rowIndex, 10);
+    const row = csvData[rowIndex] || [];
+    const matches = columnFilters.every((filterValue, colIndex) => {
+      if (!filterValue) return true;
+      const cell = row[colIndex] || '';
+      return cell.toString().toLowerCase().includes(filterValue.toLowerCase());
+    });
+    tr.style.display = matches ? '' : 'none';
+  });
 }
 
 // Atualizar somas das colunas
@@ -434,25 +485,78 @@ function setColumnSelectionRange(startIndex, endIndex) {
 // Atualizar indicador de seleção
 function updateSelectionIndicator() {
   const count = selectedColumnIndexes.length;
-  const btn = formatCurrencyBtn;
+  const btn = convertColumnBtn;
   if (count === 0) {
-    btn.textContent = 'Aplicar Formato';
+    btn.textContent = 'Converter Colunas';
   } else if (count === 1) {
-    btn.textContent = 'Aplicar Formato (1 coluna)';
+    btn.textContent = 'Converter Colunas (1 selecionada)';
   } else {
-    btn.textContent = `Aplicar Formato (${count} colunas)`;
+    btn.textContent = `Converter Colunas (${count} selecionadas)`;
   }
 }
 
-// Aplicar formato de moeda
-function applyCurrencyFormat() {
-  if (selectedColumnIndexes.length === 0) {
-    alert('Por favor, selecione uma ou mais colunas clicando nos cabeçalhos!\n\nDica: Use Ctrl+Click para selecionar múltiplas colunas ou Shift+Click para selecionar um intervalo.');
+function openConvertModal() {
+  if (!headers.length) {
+    alert('Nenhuma coluna disponível para converter.');
     return;
   }
 
-  // Formatar todas as colunas selecionadas
-  selectedColumnIndexes.forEach(colIdx => {
+  buildConvertFields();
+  convertModal.classList.add('is-open');
+  convertModal.setAttribute('aria-hidden', 'false');
+}
+
+function closeConvertModal() {
+  convertModal.classList.remove('is-open');
+  convertModal.setAttribute('aria-hidden', 'true');
+}
+
+function buildConvertFields() {
+  convertFieldsList.innerHTML = '';
+  headers.forEach((header, index) => {
+    const label = document.createElement('label');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = index;
+    checkbox.checked = selectedColumnIndexes.includes(index);
+    const name = document.createElement('span');
+    name.textContent = header || `Coluna ${index + 1}`;
+    label.appendChild(checkbox);
+    label.appendChild(name);
+    convertFieldsList.appendChild(label);
+  });
+}
+
+function toggleAllFields(checked) {
+  convertFieldsList.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    input.checked = checked;
+  });
+}
+
+function applyConvertModal() {
+  const selected = Array.from(convertFieldsList.querySelectorAll('input[type="checkbox"]:checked'))
+    .map(input => parseInt(input.value, 10));
+
+  if (selected.length === 0) {
+    alert('Selecione pelo menos uma coluna para converter.');
+    return;
+  }
+
+  selectedColumnIndexes = selected;
+  document.querySelectorAll('th.column-header').forEach((th, idx) => {
+    if (selectedColumnIndexes.includes(idx)) {
+      th.classList.add('selected');
+    } else {
+      th.classList.remove('selected');
+    }
+  });
+  updateSelectionIndicator();
+  convertColumns(selected);
+  closeConvertModal();
+}
+
+function convertColumns(columnIndexes) {
+  columnIndexes.forEach((colIdx) => {
     csvData.forEach((row, rowIndex) => {
       const value = row[colIdx];
       if (value) {

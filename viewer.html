@@ -47,7 +47,7 @@
               <option value="ja-JP">¥1,234</option>
             </select>
           </label>
-          <button id="formatCurrencyBtn" class="btn btn-secondary">Aplicar Formato na Coluna Selecionada</button>
+          <button id="convertColumnBtn" class="btn btn-secondary">Converter Colunas</button>
         </div>
       </div>
 
@@ -57,6 +57,28 @@
           <tbody id="tableBody"></tbody>
           <tfoot id="tableFoot"></tfoot>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="convertModal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close="true"></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="convertModalTitle">
+      <div class="modal-header">
+        <h3 id="convertModalTitle">Converter colunas</h3>
+        <button id="convertModalClose" class="modal-close" aria-label="Fechar">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-help">Selecione as colunas que deseja converter para o formato de moeda escolhido.</p>
+        <div class="modal-actions">
+          <button id="convertSelectAll" class="btn btn-secondary">Selecionar todas</button>
+          <button id="convertClearAll" class="btn btn-secondary">Limpar seleção</button>
+        </div>
+        <div id="convertFieldsList" class="fields-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="convertCancelBtn" class="btn btn-secondary">Cancelar</button>
+        <button id="convertApplyBtn" class="btn btn-primary">Converter</button>
       </div>
     </div>
   </div>
