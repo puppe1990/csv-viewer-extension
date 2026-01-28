@@ -243,6 +243,19 @@ body {
   color: var(--text-invert);
 }
 
+.row-number-header,
+.row-number-cell {
+  width: 64px;
+  text-align: right;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+.row-number-cell {
+  font-weight: 600;
+}
+
 .column-filter-row th {
   background: #f8fafc;
   position: sticky;

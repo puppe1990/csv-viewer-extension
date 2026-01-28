@@ -187,6 +187,10 @@ function renderTable() {
 
   // Cabeçalho
   const headerRow = document.createElement('tr');
+  const rowNumberHeader = document.createElement('th');
+  rowNumberHeader.textContent = '#';
+  rowNumberHeader.classList.add('row-number-header');
+  headerRow.appendChild(rowNumberHeader);
   headers.forEach((header, index) => {
     const th = document.createElement('th');
     th.textContent = header || `Coluna ${index + 1}`;
@@ -216,6 +220,9 @@ function renderTable() {
 
   const filterRow = document.createElement('tr');
   filterRow.classList.add('column-filter-row');
+  const filterSpacer = document.createElement('th');
+  filterSpacer.classList.add('row-number-header');
+  filterRow.appendChild(filterSpacer);
   headers.forEach((_, index) => {
     const th = document.createElement('th');
     const input = document.createElement('input');
@@ -235,7 +242,13 @@ function renderTable() {
   // Corpo da tabela
   csvData.forEach((row, rowIndex) => {
     const tr = document.createElement('tr');
+    tr.dataset.rowIndex = rowIndex;
     tr.className = 'hover:bg-gray-50 border-b border-gray-100';
+    const rowNumberCell = document.createElement('td');
+    rowNumberCell.textContent = `${rowIndex + 1}`;
+    rowNumberCell.className = 'row-number-cell';
+    rowNumberCell.dataset.rowIndex = rowIndex;
+    tr.appendChild(rowNumberCell);
     headers.forEach((_, colIndex) => {
       const td = document.createElement('td');
       td.contentEditable = true;
@@ -280,7 +293,7 @@ function renderTable() {
 function applyFilters() {
   const rows = tableBody.querySelectorAll('tr');
   rows.forEach((tr) => {
-    const rowIndex = parseInt(tr.children[0]?.dataset.rowIndex, 10);
+    const rowIndex = parseInt(tr.dataset.rowIndex, 10);
     const row = csvData[rowIndex] || [];
     const matches = columnFilters.every((filterValue, colIndex) => {
       if (!filterValue) return true;
@@ -296,6 +309,9 @@ function updateSums() {
   tableFoot.innerHTML = '';
   const footerRow = document.createElement('tr');
   
+  const spacer = document.createElement('td');
+  spacer.className = 'row-number-cell';
+  footerRow.appendChild(spacer);
   headers.forEach((_, colIndex) => {
     const td = document.createElement('td');
     const sum = calculateColumnSum(colIndex);
