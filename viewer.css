@@ -333,7 +333,19 @@ body {
 }
 
 .csv-table td.editable {
+  cursor: default;
+  user-select: none;
+}
+
+.csv-table td.editable.is-editing {
   cursor: text;
+  user-select: text;
+}
+
+.csv-table td.cell-selected {
+  background: var(--excel-soft);
+  outline: 2px solid var(--excel);
+  outline-offset: -2px;
 }
 
 .csv-table td.editable:focus {

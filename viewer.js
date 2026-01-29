@@ -9,6 +9,11 @@ let isMouseSelecting = false;
 let selectionStartIndex = null;
 let columnFilters = [];
 let sortState = { columnIndex: null, direction: null };
+let selectedCells = new Set();
+let lastSelectedCell = null;
+let isCellSelecting = false;
+let selectionStartCell = null;
+let editingCell = null;
 
 // Elementos DOM
 const dropZone = document.getElementById('dropZone');
@@ -54,6 +59,10 @@ document.addEventListener('mouseup', () => {
   if (isMouseSelecting) {
     isMouseSelecting = false;
     selectionStartIndex = null;
+  }
+  if (isCellSelecting) {
+    isCellSelecting = false;
+    selectionStartCell = null;
   }
 });
 
@@ -186,6 +195,11 @@ function renderTable() {
   tableFoot.innerHTML = '';
   selectedColumnIndexes = [];
   lastSelectedIndex = null;
+  selectedCells = new Set();
+  lastSelectedCell = null;
+  isCellSelecting = false;
+  selectionStartCell = null;
+  editingCell = null;
 
   // Cabeçalho
   const headerRow = document.createElement('tr');
@@ -284,33 +298,58 @@ function renderTable() {
     tr.appendChild(rowNumberCell);
     headers.forEach((_, colIndex) => {
       const td = document.createElement('td');
-      td.contentEditable = true;
+      td.contentEditable = false;
       td.className = 'editable';
       td.textContent = row[colIndex] || '';
+      td.tabIndex = -1;
       td.dataset.rowIndex = rowIndex;
       td.dataset.columnIndex = colIndex;
       
       // Atualizar dados ao editar
       td.addEventListener('blur', (e) => {
+        if (editingCell !== e.target) return;
         const rIdx = parseInt(e.target.dataset.rowIndex);
         const cIdx = parseInt(e.target.dataset.columnIndex);
         if (csvData[rIdx]) {
           csvData[rIdx][cIdx] = e.target.textContent;
         }
+        finishEditingCell(e.target);
         updateSums();
         applyFilters();
       });
 
       // Enter para próxima célula
       td.addEventListener('keydown', (e) => {
+        if (editingCell !== e.target) return;
         if (e.key === 'Enter') {
           e.preventDefault();
+          finishEditingCell(e.target);
           const nextRow = tr.nextElementSibling;
           if (nextRow) {
-            const nextCell = nextRow.children[colIndex];
-            if (nextCell) nextCell.focus();
+            const nextCell = nextRow.querySelector(`td[data-column-index="${colIndex}"]`);
+            if (nextCell) {
+              const nextRowIndex = parseInt(nextRow.dataset.rowIndex, 10);
+              setCellSelectionRange({ row: nextRowIndex, col: colIndex }, { row: nextRowIndex, col: colIndex }, false);
+              nextCell.focus();
+            }
           }
         }
+      });
+
+      td.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        if (editingCell === td) return;
+        e.preventDefault();
+        handleCellMouseDown(e, rowIndex, colIndex);
+      });
+
+      td.addEventListener('mouseenter', () => {
+        if (!isCellSelecting || !selectionStartCell) return;
+        setCellSelectionRange(selectionStartCell, { row: rowIndex, col: colIndex }, false);
+      });
+
+      td.addEventListener('dblclick', () => {
+        startEditingCell(td);
       });
 
       tr.appendChild(td);
@@ -493,6 +532,95 @@ function parseNumber(value, format) {
   const num = parseFloat(normalized);
   if (isNaN(num)) return null;
   return negative ? -Math.abs(num) : num;
+}
+
+function cellKey(row, col) {
+  return `${row}:${col}`;
+}
+
+function clearCellSelection() {
+  document.querySelectorAll('td.cell-selected').forEach((cell) => {
+    cell.classList.remove('cell-selected');
+  });
+  selectedCells.clear();
+}
+
+function addCellToSelection(row, col) {
+  const key = cellKey(row, col);
+  if (selectedCells.has(key)) return;
+  selectedCells.add(key);
+  const cell = document.querySelector(`td[data-row-index="${row}"][data-column-index="${col}"]`);
+  if (cell) cell.classList.add('cell-selected');
+}
+
+function removeCellFromSelection(row, col) {
+  const key = cellKey(row, col);
+  if (!selectedCells.has(key)) return;
+  selectedCells.delete(key);
+  const cell = document.querySelector(`td[data-row-index="${row}"][data-column-index="${col}"]`);
+  if (cell) cell.classList.remove('cell-selected');
+}
+
+function setCellSelectionRange(start, end, additive) {
+  if (!additive) clearCellSelection();
+  const rowStart = Math.min(start.row, end.row);
+  const rowEnd = Math.max(start.row, end.row);
+  const colStart = Math.min(start.col, end.col);
+  const colEnd = Math.max(start.col, end.col);
+
+  for (let r = rowStart; r <= rowEnd; r++) {
+    for (let c = colStart; c <= colEnd; c++) {
+      addCellToSelection(r, c);
+    }
+  }
+  lastSelectedCell = { row: end.row, col: end.col };
+}
+
+function handleCellMouseDown(e, row, col) {
+  const current = { row, col };
+  if (e.shiftKey && lastSelectedCell) {
+    setCellSelectionRange(lastSelectedCell, current, false);
+    return;
+  }
+
+  if (e.ctrlKey || e.metaKey) {
+    if (selectedCells.has(cellKey(row, col))) {
+      removeCellFromSelection(row, col);
+    } else {
+      addCellToSelection(row, col);
+    }
+    lastSelectedCell = current;
+    return;
+  }
+
+  setCellSelectionRange(current, current, false);
+  isCellSelecting = true;
+  selectionStartCell = current;
+}
+
+function startEditingCell(cell) {
+  if (editingCell && editingCell !== cell) {
+    finishEditingCell(editingCell);
+  }
+  const row = parseInt(cell.dataset.rowIndex, 10);
+  const col = parseInt(cell.dataset.columnIndex, 10);
+  setCellSelectionRange({ row, col }, { row, col }, false);
+  cell.contentEditable = true;
+  cell.classList.add('is-editing');
+  editingCell = cell;
+  cell.focus();
+
+  const selection = window.getSelection();
+  const range = document.createRange();
+  range.selectNodeContents(cell);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function finishEditingCell(cell) {
+  cell.contentEditable = false;
+  cell.classList.remove('is-editing');
+  if (editingCell === cell) editingCell = null;
 }
 
 // Função para lidar com seleção de colunas (suporta múltipla seleção)
