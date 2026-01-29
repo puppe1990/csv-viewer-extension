@@ -4,7 +4,7 @@ import { readFileAsText } from './shared/file-utils.js';
 import { formatNumber, getDecimalCount, parseNumber } from './shared/number-utils.js';
 import { loadPreference, savePreference } from './shared/storage-utils.js';
 import { createCellSelection } from './shared/cell-selection.js';
-import { renderTable, updateSums } from './shared/table-renderer.js';
+import { applyFilters, renderTable, updateSums } from './shared/table-renderer.js';
 
 // Estado da aplicação
 let csvData = [];
@@ -56,6 +56,7 @@ convertClearAll.addEventListener('click', () => toggleAllFields(false));
 convertModal.addEventListener('click', (e) => {
   if (e.target.dataset.close) closeConvertModal();
 });
+document.addEventListener('keydown', handleGridKeydown);
 document.addEventListener('mouseup', () => {
   if (cellSelection.isSelectingActive()) cellSelection.stopSelection();
 });
@@ -193,6 +194,140 @@ function toggleSort(columnIndex) {
 // Formatar número
 function formatNumberForCell(num, decimals = 2) {
   return formatNumber(num, decimals, currencyFormat);
+}
+
+function handleGridKeydown(e) {
+  if (!headers.length || !csvData.length) return;
+  const active = document.activeElement;
+  if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) return;
+  if (active && active.isContentEditable) return;
+  if (cellSelection.isEditingCell(active)) return;
+
+  const hasMod = e.ctrlKey || e.metaKey;
+  if (hasMod && e.key.toLowerCase() === 'c') {
+    e.preventDefault();
+    copySelectionToClipboard();
+    return;
+  }
+  if (hasMod && e.key.toLowerCase() === 'v') {
+    e.preventDefault();
+    pasteFromClipboard();
+    return;
+  }
+
+  const moveMap = {
+    ArrowUp: { deltaRow: -1, deltaCol: 0 },
+    ArrowDown: { deltaRow: 1, deltaCol: 0 },
+    ArrowLeft: { deltaRow: 0, deltaCol: -1 },
+    ArrowRight: { deltaRow: 0, deltaCol: 1 }
+  };
+  if (!moveMap[e.key]) return;
+
+  e.preventDefault();
+  if (!cellSelection.getLastSelectedCell()) {
+    cellSelection.setCellSelectionRange({ row: 0, col: 0 }, { row: 0, col: 0 }, false);
+  }
+
+  const next = cellSelection.moveSelection({
+    ...moveMap[e.key],
+    maxRow: csvData.length - 1,
+    maxCol: headers.length - 1,
+    extend: e.shiftKey
+  });
+
+  if (next) {
+    const cell = tableBody.querySelector(
+      `td[data-row-index="${next.row}"][data-column-index="${next.col}"]`
+    );
+    if (cell) {
+      cell.focus();
+      cell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  }
+}
+
+async function copySelectionToClipboard() {
+  const bounds = cellSelection.getSelectionBounds();
+  if (!bounds) return;
+
+  const rows = [];
+  for (let r = bounds.minRow; r <= bounds.maxRow; r += 1) {
+    const rowValues = [];
+    for (let c = bounds.minCol; c <= bounds.maxCol; c += 1) {
+      rowValues.push(csvData[r]?.[c] ?? '');
+    }
+    rows.push(rowValues.join('\t'));
+  }
+  await writeClipboardText(rows.join('\n'));
+}
+
+async function pasteFromClipboard() {
+  const text = await readClipboardText();
+  if (!text) return;
+
+  const rawRows = text.replace(/\r/g, '').split('\n');
+  if (rawRows.length && rawRows[rawRows.length - 1] === '') rawRows.pop();
+  if (!rawRows.length) return;
+
+  const start = cellSelection.getLastSelectedCell() || { row: 0, col: 0 };
+  let maxRow = start.row;
+  let maxCol = start.col;
+
+  rawRows.forEach((line, rOffset) => {
+    const cells = line.split('\t');
+    cells.forEach((value, cOffset) => {
+      const targetRow = start.row + rOffset;
+      const targetCol = start.col + cOffset;
+      if (targetRow >= csvData.length || targetCol >= headers.length) return;
+      if (!csvData[targetRow]) return;
+      csvData[targetRow][targetCol] = value;
+      const cell = tableBody.querySelector(
+        `td[data-row-index="${targetRow}"][data-column-index="${targetCol}"]`
+      );
+      if (cell) cell.textContent = value;
+      if (targetRow > maxRow) maxRow = targetRow;
+      if (targetCol > maxCol) maxCol = targetCol;
+    });
+  });
+
+  cellSelection.setCellSelectionRange(
+    { row: start.row, col: start.col },
+    { row: maxRow, col: maxCol },
+    false
+  );
+  updateSums({ headers, csvData, columnFilters, sortState }, { tableHead, tableBody, tableFoot }, formatNumberForCell, parseNumber, sourceFormat);
+  applyFilters({ headers, csvData, columnFilters, sortState }, { tableHead, tableBody, tableFoot });
+}
+
+async function writeClipboardText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch (err) {
+      // fallback below
+    }
+  }
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'absolute';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+}
+
+async function readClipboardText() {
+  if (navigator.clipboard && navigator.clipboard.readText) {
+    try {
+      return await navigator.clipboard.readText();
+    } catch (err) {
+      return '';
+    }
+  }
+  return '';
 }
 
 // Aplicar formato de moeda

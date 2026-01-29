@@ -4,6 +4,7 @@ export function createCellSelection() {
   let isSelecting = false;
   let selectionStartCell = null;
   let editingCell = null;
+  let keyboardAnchorCell = null;
 
   function cellKey(row, col) {
     return `${row}:${col}`;
@@ -49,6 +50,7 @@ export function createCellSelection() {
 
   function handleCellMouseDown(e, row, col) {
     const current = { row, col };
+    keyboardAnchorCell = null;
     if (e.shiftKey && lastSelectedCell) {
       setCellSelectionRange(lastSelectedCell, current, false);
       return;
@@ -76,6 +78,7 @@ export function createCellSelection() {
     const row = parseInt(cell.dataset.rowIndex, 10);
     const col = parseInt(cell.dataset.columnIndex, 10);
     setCellSelectionRange({ row, col }, { row, col }, false);
+    keyboardAnchorCell = null;
     cell.contentEditable = true;
     cell.classList.add('is-editing');
     editingCell = cell;
@@ -111,11 +114,62 @@ export function createCellSelection() {
     selectionStartCell = null;
   }
 
+  function getLastSelectedCell() {
+    return lastSelectedCell;
+  }
+
+  function getSelectionBounds() {
+    if (selectedCells.size === 0) {
+      if (!lastSelectedCell) return null;
+      return {
+        minRow: lastSelectedCell.row,
+        maxRow: lastSelectedCell.row,
+        minCol: lastSelectedCell.col,
+        maxCol: lastSelectedCell.col
+      };
+    }
+
+    let minRow = Infinity;
+    let maxRow = -Infinity;
+    let minCol = Infinity;
+    let maxCol = -Infinity;
+
+    selectedCells.forEach((key) => {
+      const [rowStr, colStr] = key.split(':');
+      const row = parseInt(rowStr, 10);
+      const col = parseInt(colStr, 10);
+      if (row < minRow) minRow = row;
+      if (row > maxRow) maxRow = row;
+      if (col < minCol) minCol = col;
+      if (col > maxCol) maxCol = col;
+    });
+
+    return { minRow, maxRow, minCol, maxCol };
+  }
+
+  function moveSelection({ deltaRow, deltaCol, maxRow, maxCol, extend }) {
+    if (!lastSelectedCell) return null;
+    const row = Math.max(0, Math.min(maxRow, lastSelectedCell.row + deltaRow));
+    const col = Math.max(0, Math.min(maxCol, lastSelectedCell.col + deltaCol));
+    const next = { row, col };
+
+    if (extend) {
+      if (!keyboardAnchorCell) keyboardAnchorCell = lastSelectedCell;
+      setCellSelectionRange(keyboardAnchorCell, next, false);
+    } else {
+      keyboardAnchorCell = null;
+      setCellSelectionRange(next, next, false);
+    }
+
+    return next;
+  }
+
   function reset() {
     clearCellSelection();
     lastSelectedCell = null;
     isSelecting = false;
     selectionStartCell = null;
+    keyboardAnchorCell = null;
     if (editingCell) finishEditingCell(editingCell);
   }
 
@@ -124,9 +178,12 @@ export function createCellSelection() {
     clearCellSelection,
     finishEditingCell,
     getSelectionStart,
+    getSelectionBounds,
+    getLastSelectedCell,
     handleCellMouseDown,
     isEditingCell,
     isSelectingActive,
+    moveSelection,
     removeCellFromSelection,
     reset,
     setCellSelectionRange,
