@@ -75,10 +75,6 @@ export function parseNumber(value, format) {
         const frac = parts[1] || '';
         if (frac.length === 0) {
           normalized = parts[0];
-        } else if (frac.length === 1 || frac.length === 2) {
-          normalized = `${parts[0]}.${frac}`;
-        } else if (frac.length === 3) {
-          normalized = parts.join('');
         } else {
           normalized = `${parts[0]}.${frac}`;
         }
