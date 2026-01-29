@@ -238,9 +238,50 @@ body {
   transition: background 0.2s ease, color 0.2s ease;
 }
 
+.csv-table th.column-header .header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.csv-table th.column-header .header-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.csv-table th.column-header .sort-button {
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
+  color: var(--text-soft);
+  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.csv-table th.column-header .sort-button:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.csv-table th.column-header .sort-button.active {
+  background: var(--excel-soft);
+  color: var(--excel);
+  border-color: rgba(16, 124, 65, 0.4);
+}
+
 .csv-table th.column-header.selected {
   background: #107c41;
   color: var(--text-invert);
+}
+
+.csv-table th.column-header.selected .sort-button {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text-invert);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .row-number-header,

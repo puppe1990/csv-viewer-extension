@@ -8,6 +8,7 @@ let lastSelectedIndex = null;
 let isMouseSelecting = false;
 let selectionStartIndex = null;
 let columnFilters = [];
+let sortState = { columnIndex: null, direction: null };
 
 // Elementos DOM
 const dropZone = document.getElementById('dropZone');
@@ -139,6 +140,7 @@ function parseCSV(text) {
   headers = parseCSVLine(lines[0], delimiter);
   csvData = [];
   columnFilters = Array(headers.length).fill('');
+  sortState = { columnIndex: null, direction: null };
 
   for (let i = 1; i < lines.length; i++) {
     const row = parseCSVLine(lines[i], delimiter);
@@ -193,9 +195,33 @@ function renderTable() {
   headerRow.appendChild(rowNumberHeader);
   headers.forEach((header, index) => {
     const th = document.createElement('th');
-    th.textContent = header || `Coluna ${index + 1}`;
     th.dataset.columnIndex = index;
     th.classList.add('column-header');
+    const headerContent = document.createElement('div');
+    headerContent.className = 'header-content';
+    const headerLabel = document.createElement('span');
+    headerLabel.className = 'header-label';
+    headerLabel.textContent = header || `Coluna ${index + 1}`;
+    const sortButton = document.createElement('button');
+    sortButton.type = 'button';
+    sortButton.className = 'sort-button';
+    sortButton.dataset.columnIndex = index;
+    sortButton.setAttribute('aria-label', `Ordenar coluna ${header || `Coluna ${index + 1}`}`);
+    sortButton.title = 'Ordenar';
+    const sortDirection = sortState.columnIndex === index ? sortState.direction : null;
+    sortButton.textContent = sortDirection === 'asc' ? '^' : sortDirection === 'desc' ? 'v' : '^v';
+    if (sortDirection) sortButton.classList.add('active');
+    sortButton.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+    });
+    sortButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      toggleSort(index);
+    });
+    headerContent.appendChild(headerLabel);
+    headerContent.appendChild(sortButton);
+    th.appendChild(headerContent);
     th.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
       if (e.ctrlKey || e.metaKey || e.shiftKey) {
@@ -295,6 +321,32 @@ function renderTable() {
   // Rodapé com somas
   updateSums();
   applyFilters();
+}
+
+function toggleSort(columnIndex) {
+  const isSameColumn = sortState.columnIndex === columnIndex;
+  const direction = isSameColumn && sortState.direction === 'asc' ? 'desc' : 'asc';
+  sortState = { columnIndex, direction };
+
+  csvData.sort((rowA, rowB) => {
+    const valueA = rowA[columnIndex] ?? '';
+    const valueB = rowB[columnIndex] ?? '';
+    const numA = parseNumber(valueA, sourceFormat);
+    const numB = parseNumber(valueB, sourceFormat);
+
+    let result = 0;
+    if (numA !== null && numB !== null) {
+      result = numA - numB;
+    } else {
+      const textA = valueA.toString().toLowerCase();
+      const textB = valueB.toString().toLowerCase();
+      result = textA.localeCompare(textB, undefined, { numeric: true, sensitivity: 'base' });
+    }
+
+    return direction === 'asc' ? result : -result;
+  });
+
+  renderTable();
 }
 
 function applyFilters() {
