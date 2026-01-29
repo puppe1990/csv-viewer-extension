@@ -5,6 +5,7 @@ export function createCellSelection() {
   let selectionStartCell = null;
   let editingCell = null;
   let keyboardAnchorCell = null;
+  let copiedBounds = null;
 
   function cellKey(row, col) {
     return `${row}:${col}`;
@@ -15,6 +16,25 @@ export function createCellSelection() {
       cell.classList.remove('cell-selected');
     });
     selectedCells.clear();
+  }
+
+  function clearCopiedRange() {
+    document.querySelectorAll('td.cell-copied').forEach((cell) => {
+      cell.classList.remove('cell-copied');
+    });
+    copiedBounds = null;
+  }
+
+  function markCopiedRange(bounds) {
+    clearCopiedRange();
+    if (!bounds) return;
+    copiedBounds = bounds;
+    for (let r = bounds.minRow; r <= bounds.maxRow; r += 1) {
+      for (let c = bounds.minCol; c <= bounds.maxCol; c += 1) {
+        const cell = document.querySelector(`td[data-row-index="${r}"][data-column-index="${c}"]`);
+        if (cell) cell.classList.add('cell-copied');
+      }
+    }
   }
 
   function addCellToSelection(row, col) {
@@ -170,12 +190,14 @@ export function createCellSelection() {
     isSelecting = false;
     selectionStartCell = null;
     keyboardAnchorCell = null;
+    clearCopiedRange();
     if (editingCell) finishEditingCell(editingCell);
   }
 
   return {
     addCellToSelection,
     clearCellSelection,
+    clearCopiedRange,
     finishEditingCell,
     getSelectionStart,
     getSelectionBounds,
@@ -183,6 +205,7 @@ export function createCellSelection() {
     handleCellMouseDown,
     isEditingCell,
     isSelectingActive,
+    markCopiedRange,
     moveSelection,
     removeCellFromSelection,
     reset,

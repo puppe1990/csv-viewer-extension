@@ -344,6 +344,11 @@ body {
   outline-offset: -2px;
 }
 
+.csv-table td.cell-copied {
+  outline: 2px dashed var(--excel);
+  outline-offset: -2px;
+}
+
 .csv-table td.editable:focus {
   outline: 2px solid var(--excel);
   outline-offset: -2px;

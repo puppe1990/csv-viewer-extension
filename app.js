@@ -252,12 +252,16 @@ async function copySelectionToClipboard() {
 
   const rows = [];
   for (let r = bounds.minRow; r <= bounds.maxRow; r += 1) {
+    const rowEl = tableBody.querySelector(`tr[data-row-index="${r}"]`);
+    if (!rowEl || rowEl.style.display === 'none') continue;
     const rowValues = [];
     for (let c = bounds.minCol; c <= bounds.maxCol; c += 1) {
       rowValues.push(csvData[r]?.[c] ?? '');
     }
     rows.push(rowValues.join('\t'));
   }
+  if (!rows.length) return;
+  cellSelection.markCopiedRange(bounds);
   await writeClipboardText(rows.join('\n'));
 }
 
