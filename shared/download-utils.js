@@ -13,8 +13,8 @@ export function downloadBlob(blob, filename) {
   document.body.removeChild(link);
 }
 
-export function downloadCSV(headers, rows) {
-  const csvContent = serializeCSV(headers, rows);
+export function downloadCSV(headers, rows, delimiter) {
+  const csvContent = serializeCSV(headers, rows, delimiter);
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   downloadBlob(blob, 'edited_file.csv');
 }

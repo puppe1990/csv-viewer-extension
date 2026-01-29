@@ -11,6 +11,7 @@ let csvData = [];
 let headers = [];
 let currencyFormat = 'pt-BR';
 let sourceFormat = 'auto';
+let delimiter = ',';
 let selectedColumnIndex = null;
 let columnFilters = [];
 let sortState = { columnIndex: null, direction: null };
@@ -44,7 +45,7 @@ dropZone.addEventListener('dragover', handleDragOver);
 dropZone.addEventListener('dragleave', handleDragLeave);
 dropZone.addEventListener('drop', handleDrop);
 fileInput.addEventListener('change', handleFileSelect);
-downloadBtn.addEventListener('click', () => downloadCSV(headers, csvData));
+downloadBtn.addEventListener('click', () => downloadCSV(headers, csvData, delimiter));
 downloadExcelBtn.addEventListener('click', () => downloadExcel(headers, csvData, sourceFormat));
 newFileBtn.addEventListener('click', resetEditor);
 convertColumnBtn.addEventListener('click', openConvertModal);
@@ -127,6 +128,7 @@ function processFile(file) {
       const parsed = parseCSV(text);
       headers = parsed.headers;
       csvData = parsed.rows;
+      delimiter = parsed.delimiter || ',';
       columnFilters = Array(headers.length).fill('');
       sortState = { columnIndex: null, direction: null };
       renderTableWrapper();
@@ -414,6 +416,7 @@ function resetEditor() {
   if (confirm('Deseja criar um novo arquivo? Os dados atuais serão perdidos.')) {
     csvData = [];
     headers = [];
+    delimiter = ',';
     editorContainer.style.display = 'none';
     dropZone.style.display = 'flex';
     fileInput.value = '';
