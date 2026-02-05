@@ -113,7 +113,18 @@ export function parseCSV(text) {
 
   if (rows.length === 0) return { headers: [], rows: [], delimiter };
   const [headers, ...dataRows] = rows;
-  return { headers, rows: dataRows, delimiter };
+  const normalizedRows = dataRows.map((row) => {
+    if (row.length > headers.length) {
+      const head = row.slice(0, headers.length - 1);
+      const tail = row.slice(headers.length - 1).join(delimiter);
+      return [...head, tail];
+    }
+    if (row.length < headers.length) {
+      return [...row, ...Array(headers.length - row.length).fill('')];
+    }
+    return row;
+  });
+  return { headers, rows: normalizedRows, delimiter };
 }
 
 export function serializeCSV(headers, rows, delimiter = ',') {
