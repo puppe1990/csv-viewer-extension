@@ -83,6 +83,41 @@ body {
   opacity: 0.9;
 }
 
+.upload-loader {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+}
+
+.upload-loader-track {
+  width: min(360px, 72vw);
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(248, 250, 252, 0.3);
+  border: 1px solid rgba(248, 250, 252, 0.45);
+}
+
+.upload-loader-bar {
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #facc15 0%, #86efac 100%);
+  transition: width 0.12s linear;
+}
+
+.upload-loader-text {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.drop-zone.is-loading {
+  pointer-events: none;
+  cursor: progress;
+}
+
 /* Editor Container */
 .editor-container {
   width: 100%;

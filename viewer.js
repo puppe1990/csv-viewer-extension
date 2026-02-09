@@ -1,4 +1,4 @@
-import { parseCSV } from './shared/csv-utils.js';
+import { parseCSVAsync } from './shared/csv-utils.js';
 import { downloadCSV, downloadExcel } from './shared/download-utils.js';
 import { readFileAsText } from './shared/file-utils.js';
 import { formatNumber, getDecimalCount, parseNumber } from './shared/number-utils.js';
@@ -23,6 +23,9 @@ const cellSelection = createCellSelection();
 // Elementos DOM
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
+const uploadLoader = document.getElementById('uploadLoader');
+const uploadLoaderBar = document.getElementById('uploadLoaderBar');
+const uploadLoaderText = document.getElementById('uploadLoaderText');
 const editorContainer = document.getElementById('editorContainer');
 const csvTable = document.getElementById('csvTable');
 const tableHead = document.getElementById('tableHead');
@@ -178,23 +181,66 @@ function handleFileSelect(e) {
   }
 }
 
+function setUploadProgress(progress) {
+  const safeProgress = Math.max(0, Math.min(100, Math.round(progress)));
+  uploadLoaderBar.style.width = `${safeProgress}%`;
+  uploadLoaderText.textContent = `${safeProgress}%`;
+}
+
+function toggleUploadLoader(isVisible) {
+  uploadLoader.hidden = !isVisible;
+  dropZone.classList.toggle('is-loading', isVisible);
+}
+
+function waitForNextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
 // Processar arquivo CSV
-function processFile(file) {
-  readFileAsText(file)
-    .then((text) => {
-      const parsed = parseCSV(text);
-      headers = parsed.headers;
-      csvData = parsed.rows;
-      delimiter = parsed.delimiter || ',';
-      columnFilters = Array(headers.length).fill('');
-      sortState = { columnIndex: null, direction: null };
-      renderTableWrapper();
-      dropZone.style.display = 'none';
-      editorContainer.style.display = 'flex';
-    })
-    .catch(() => {
-      alert('Não foi possível ler o arquivo CSV.');
+async function processFile(file) {
+  toggleUploadLoader(true);
+  setUploadProgress(0);
+  let visualProgress = 0;
+
+  const setVisualProgress = (progress) => {
+    visualProgress = Math.max(visualProgress, Math.min(100, progress));
+    setUploadProgress(visualProgress);
+  };
+
+  try {
+    await waitForNextFrame();
+    const text = await readFileAsText(file, 'UTF-8', (event) => {
+      const total = event.total || file.size;
+      if (!total) return;
+      const readProgress = Math.min(40, (event.loaded / total) * 40);
+      setVisualProgress(readProgress);
     });
+    setVisualProgress(40);
+
+    const parsed = await parseCSVAsync(text, {
+      onProgress: (parseProgress) => {
+        const totalProgress = 40 + (parseProgress / 100) * 55;
+        setVisualProgress(totalProgress);
+      }
+    });
+    setVisualProgress(95);
+    headers = parsed.headers;
+    csvData = parsed.rows;
+    delimiter = parsed.delimiter || ',';
+    columnFilters = Array(headers.length).fill('');
+    sortState = { columnIndex: null, direction: null };
+    setVisualProgress(99);
+    renderTableWrapper();
+    await waitForNextFrame();
+    setVisualProgress(100);
+    await waitForNextFrame();
+    dropZone.style.display = 'none';
+    editorContainer.style.display = 'flex';
+  } catch {
+    toggleUploadLoader(false);
+    setUploadProgress(0);
+    alert('Não foi possível ler o arquivo CSV.');
+  }
 }
 
 // Renderizar tabela
@@ -527,6 +573,8 @@ function resetEditor() {
     lastSelectedIndex = null;
     editorContainer.style.display = 'none';
     dropZone.style.display = 'flex';
+    toggleUploadLoader(false);
+    setUploadProgress(0);
     fileInput.value = '';
   }
 }

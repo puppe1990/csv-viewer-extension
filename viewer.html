@@ -17,6 +17,12 @@
         </svg>
         <h2>Arraste um arquivo CSV aqui</h2>
         <p>ou clique para selecionar</p>
+        <div id="uploadLoader" class="upload-loader" hidden>
+          <div class="upload-loader-track">
+            <div id="uploadLoaderBar" class="upload-loader-bar"></div>
+          </div>
+          <span id="uploadLoaderText" class="upload-loader-text">0%</span>
+        </div>
         <input type="file" id="fileInput" accept=".csv" style="display: none;">
       </div>
     </div>

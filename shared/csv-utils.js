@@ -113,7 +113,98 @@ export function parseCSV(text) {
 
   if (rows.length === 0) return { headers: [], rows: [], delimiter };
   const [headers, ...dataRows] = rows;
-  const normalizedRows = dataRows.map((row) => {
+  const normalizedRows = normalizeRows(headers, dataRows, delimiter);
+  return { headers, rows: normalizedRows, delimiter };
+}
+
+export async function parseCSVAsync(text, options = {}) {
+  const { onProgress = null, chunkSize = 50000 } = options;
+  if (!text || !text.trim()) {
+    if (typeof onProgress === 'function') onProgress(100);
+    return { headers: [], rows: [], delimiter: ',' };
+  }
+
+  const delimiter = detectDelimiter(text);
+  const rows = [];
+  let currentRow = [];
+  let currentCell = '';
+  let inQuotes = false;
+  const totalLength = text.length;
+  let index = 0;
+
+  function pushCell() {
+    currentRow.push(currentCell.trim());
+    currentCell = '';
+  }
+
+  function pushRow() {
+    pushCell();
+    const hasContent = currentRow.some((cell) => cell !== '');
+    if (hasContent) rows.push(currentRow);
+    currentRow = [];
+  }
+
+  while (index < totalLength) {
+    const end = Math.min(index + chunkSize, totalLength);
+    for (; index < end; index += 1) {
+      const char = text[index];
+      const nextChar = text[index + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          currentCell += '"';
+          index += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (!inQuotes && char === delimiter) {
+        pushCell();
+        continue;
+      }
+
+      if (!inQuotes && char === '\n') {
+        pushRow();
+        continue;
+      }
+
+      if (!inQuotes && char === '\r') {
+        if (nextChar === '\n') index += 1;
+        pushRow();
+        continue;
+      }
+
+      currentCell += char;
+    }
+
+    if (typeof onProgress === 'function') {
+      onProgress((index / totalLength) * 100);
+    }
+
+    if (index < totalLength) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }
+
+  if (currentCell.length > 0 || currentRow.length > 0) {
+    pushRow();
+  }
+
+  if (rows.length === 0) {
+    if (typeof onProgress === 'function') onProgress(100);
+    return { headers: [], rows: [], delimiter };
+  }
+
+  const [headers, ...dataRows] = rows;
+  const normalizedRows = normalizeRows(headers, dataRows, delimiter);
+  if (typeof onProgress === 'function') onProgress(100);
+  return { headers, rows: normalizedRows, delimiter };
+}
+
+function normalizeRows(headers, dataRows, delimiter) {
+  return dataRows.map((row) => {
     if (row.length > headers.length) {
       const head = row.slice(0, headers.length - 1);
       const tail = row.slice(headers.length - 1).join(delimiter);
@@ -124,7 +215,6 @@ export function parseCSV(text) {
     }
     return row;
   });
-  return { headers, rows: normalizedRows, delimiter };
 }
 
 export function serializeCSV(headers, rows, delimiter = ',') {
