@@ -1,0 +1,30 @@
+{
+  "name": "csv-viewer-extension",
+  "version": "1.0.0",
+  "description": "Uma extensão do Chrome que permite visualizar e editar arquivos CSV com funcionalidades similares ao Excel, incluindo edição de células, soma automática de colunas e formatação de moeda.",
+  "main": "app.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/puppe1990/csv-viewer-extension.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/puppe1990/csv-viewer-extension/issues"
+  },
+  "homepage": "https://github.com/puppe1990/csv-viewer-extension#readme",
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
+    "babel-jest": "^30.3.0",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0"
+  }
+}
