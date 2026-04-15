@@ -1,7 +1,14 @@
 import { parseCSVAsync } from './shared/csv-utils.js';
 import { parseXLSXAsync } from './shared/xlsx-utils.js';
+import { parseJSONAsync } from './shared/json-utils.js';
 import { downloadCSV, downloadExcel } from './shared/download-utils.js';
 import { readFileAsText, readFileAsArrayBuffer } from './shared/file-utils.js';
+import {
+  getSupportedDataFileMessage,
+  isJSONFile,
+  isSupportedDataFile,
+  isXLSXFile
+} from './shared/file-type-utils.js';
 import { formatNumber, getDecimalCount, parseNumber } from './shared/number-utils.js';
 import { loadPreference, savePreference } from './shared/storage-utils.js';
 import { createCellSelection } from './shared/cell-selection.js';
@@ -113,17 +120,10 @@ function handleDrop(e) {
   const files = e.dataTransfer.files;
   if (files.length > 0) {
     const file = files[0];
-    const isValidType = file.type === 'text/csv' || 
-                        file.name.endsWith('.csv') || 
-                        file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-                        file.type === 'application/vnd.ms-excel' ||
-                        file.name.endsWith('.xlsx') || 
-                        file.name.endsWith('.xls');
-    
-    if (isValidType) {
+    if (isSupportedDataFile(file)) {
       processFile(file);
     } else {
-      alert('Por favor, selecione um arquivo CSV ou XLSX válido.');
+      alert(getSupportedDataFileMessage());
     }
   }
 }
@@ -150,7 +150,7 @@ function waitForNextFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
-// Processar arquivo CSV ou XLSX
+// Processar arquivo CSV, JSON ou XLSX
 async function processFile(file) {
   toggleUploadLoader(true);
   setUploadProgress(0);
@@ -163,15 +163,10 @@ async function processFile(file) {
 
   try {
     await waitForNextFrame();
-    
-    const isXLSX = file.name.endsWith('.xlsx') || 
-                   file.name.endsWith('.xls') ||
-                   file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-                   file.type === 'application/vnd.ms-excel';
 
     let parsed;
-    
-    if (isXLSX) {
+
+    if (isXLSXFile(file)) {
       const arrayBuffer = await readFileAsArrayBuffer(file, (event) => {
         const total = event.total || file.size;
         if (!total) return;
@@ -179,8 +174,23 @@ async function processFile(file) {
         setVisualProgress(readProgress);
       });
       setVisualProgress(90);
-      
+
       parsed = await parseXLSXAsync(arrayBuffer, {
+        onProgress: (parseProgress) => {
+          const totalProgress = 90 + (parseProgress / 100) * 5;
+          setVisualProgress(totalProgress);
+        }
+      });
+    } else if (isJSONFile(file)) {
+      const text = await readFileAsText(file, 'UTF-8', (event) => {
+        const total = event.total || file.size;
+        if (!total) return;
+        const readProgress = Math.min(40, (event.loaded / total) * 90);
+        setVisualProgress(readProgress);
+      });
+      setVisualProgress(90);
+
+      parsed = await parseJSONAsync(text, {
         onProgress: (parseProgress) => {
           const totalProgress = 90 + (parseProgress / 100) * 5;
           setVisualProgress(totalProgress);
