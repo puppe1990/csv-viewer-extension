@@ -25,11 +25,29 @@ export function getSelectionCellCount(bounds) {
   return (bounds.maxRow - bounds.minRow + 1) * (bounds.maxCol - bounds.minCol + 1);
 }
 
-export function getFormulaBarValue(bounds, csvData, cellSelection) {
+export function getFormulaBarValue(bounds, csvData, options = {}) {
   if (!bounds) return '';
 
-  const count = getSelectionCellCount(bounds);
-  if (count > 1) return `${count} células selecionadas`;
+  const { tableBody, countVisibleSelected } = options;
+  const visibleCount =
+    typeof countVisibleSelected === 'function' && tableBody
+      ? countVisibleSelected(tableBody)
+      : getSelectionCellCount(bounds);
+
+  if (visibleCount > 1) return `${visibleCount} células selecionadas`;
+
+  if (visibleCount === 1 && tableBody) {
+    const selected = [...tableBody.querySelectorAll('td.cell-selected')].find((td) => {
+      const tr = td.closest('tr');
+      return tr && tr.style.display !== 'none';
+    });
+    if (selected) {
+      const rowIndex = parseInt(selected.dataset.rowIndex, 10);
+      const colIndex = parseInt(selected.dataset.columnIndex, 10);
+      const value = csvData[rowIndex]?.[colIndex];
+      return value == null ? '' : String(value);
+    }
+  }
 
   const value = csvData[bounds.minRow]?.[bounds.minCol];
   return value == null ? '' : String(value);
@@ -54,7 +72,8 @@ export function createSheetHeaderController(elements) {
     colCount = 0,
     selectionBounds = null,
     csvData = [],
-    cellSelection
+    tableBody = null,
+    countVisibleSelected = null
   }) {
     if (elements.statsEl) {
       elements.statsEl.textContent = formatSheetStats(rowCount, colCount);
@@ -65,7 +84,10 @@ export function createSheetHeaderController(elements) {
     }
 
     if (elements.cellValueEl) {
-      elements.cellValueEl.value = getFormulaBarValue(selectionBounds, csvData, cellSelection);
+      elements.cellValueEl.value = getFormulaBarValue(selectionBounds, csvData, {
+        tableBody,
+        countVisibleSelected
+      });
     }
   }
 

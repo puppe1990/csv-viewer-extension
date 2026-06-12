@@ -9,7 +9,9 @@ module.exports = {
     '/node_modules/',
     '/tests/table-renderer.test.js',
     '/tests/ui-state.test.js',
-    '/tests/spreadsheet-ui.test.js'
+    '/tests/spreadsheet-ui.test.js',
+    '/tests/clipboard-utils.test.js',
+    '/tests/clipboard-shortcuts.test.js'
   ],
   collectCoverageFrom: ['shared/**/*.js'],
   coverageDirectory: 'coverage',

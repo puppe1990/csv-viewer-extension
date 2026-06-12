@@ -234,6 +234,30 @@
       </div>
     </div>
 
+    <div id="newFileModal" class="modal" aria-hidden="true">
+      <div class="modal-backdrop" data-close="true"></div>
+      <div
+        class="modal-content modal-content--compact"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="newFileModalTitle"
+      >
+        <div class="modal-header">
+          <h3 id="newFileModalTitle">Novo arquivo</h3>
+          <button id="newFileModalClose" class="modal-close" aria-label="Fechar">×</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-help">
+            Os dados atuais serão perdidos. Deseja voltar para a tela de importação?
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button id="newFileCancelBtn" class="btn btn-secondary">Cancelar</button>
+          <button id="newFileConfirmBtn" class="btn btn-danger">Novo arquivo</button>
+        </div>
+      </div>
+    </div>
+
     <div id="convertModal" class="modal" aria-hidden="true">
       <div class="modal-backdrop" data-close="true"></div>
       <div

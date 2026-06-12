@@ -489,6 +489,15 @@ body {
   background: var(--accent-hover);
 }
 
+.btn-danger {
+  background: #b42318;
+  color: var(--text-invert);
+}
+
+.btn-danger:hover {
+  background: #912018;
+}
+
 .btn-secondary,
 .btn-ghost {
   background: transparent;
@@ -771,6 +780,10 @@ body {
   position: absolute;
   inset: 0;
   background: var(--surface-overlay);
+}
+
+.modal-content--compact {
+  width: min(400px, calc(100% - 2rem));
 }
 
 .modal-content {

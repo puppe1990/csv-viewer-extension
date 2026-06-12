@@ -15,6 +15,14 @@ import { createCellSelection } from './shared/cell-selection.js';
 import { applyFilters, renderTable, updateSums } from './shared/table-renderer.js';
 import { showDropZone, showEditor } from './shared/ui-state.js';
 import { createSheetHeaderController } from './shared/spreadsheet-ui.js';
+import {
+  buildCopyText,
+  canHandleGridClipboard,
+  copyTextToClipboard,
+  countVisibleSelectedCells,
+  hasCopyableGridSelection,
+  shouldInterceptGridCopy
+} from './shared/clipboard-utils.js';
 
 // Estado da aplicação
 let csvData = [];
@@ -44,6 +52,10 @@ const newFileBtn = document.getElementById('newFileBtn');
 const sourceFormatSelect = document.getElementById('sourceFormat');
 const currencyFormatSelect = document.getElementById('currencyFormat');
 const convertColumnBtn = document.getElementById('convertColumnBtn');
+const newFileModal = document.getElementById('newFileModal');
+const newFileModalClose = document.getElementById('newFileModalClose');
+const newFileCancelBtn = document.getElementById('newFileCancelBtn');
+const newFileConfirmBtn = document.getElementById('newFileConfirmBtn');
 const convertModal = document.getElementById('convertModal');
 const convertFieldsList = document.getElementById('convertFieldsList');
 const convertModalClose = document.getElementById('convertModalClose');
@@ -67,7 +79,8 @@ function updateSheetHeader() {
     colCount: headers.length,
     selectionBounds: cellSelection.getSelectionBounds(),
     csvData,
-    cellSelection
+    tableBody,
+    countVisibleSelected: countVisibleSelectedCells
   });
 }
 
@@ -105,7 +118,13 @@ dropZone.addEventListener('drop', handleDrop);
 fileInput.addEventListener('change', handleFileSelect);
 downloadBtn.addEventListener('click', () => downloadCSV(headers, csvData, delimiter));
 downloadExcelBtn.addEventListener('click', () => downloadExcel(headers, csvData, sourceFormat));
-newFileBtn.addEventListener('click', resetEditor);
+newFileBtn.addEventListener('click', openNewFileModal);
+newFileModalClose.addEventListener('click', closeNewFileModal);
+newFileCancelBtn.addEventListener('click', closeNewFileModal);
+newFileConfirmBtn.addEventListener('click', confirmNewFile);
+newFileModal.addEventListener('click', (e) => {
+  if (e.target.dataset.close) closeNewFileModal();
+});
 convertColumnBtn.addEventListener('click', openConvertModal);
 clearFiltersBtn.addEventListener('click', clearFilters);
 clearSortBtn.addEventListener('click', clearSort);
@@ -118,7 +137,8 @@ convertClearAll.addEventListener('click', () => toggleAllFields(false));
 convertModal.addEventListener('click', (e) => {
   if (e.target.dataset.close) closeConvertModal();
 });
-document.addEventListener('keydown', handleGridKeydown);
+document.addEventListener('keydown', handleGridKeydown, true);
+document.addEventListener('copy', handleGridCopy);
 document.addEventListener('mouseup', () => {
   if (cellSelection.isSelectingActive()) cellSelection.stopSelection();
   updateSheetHeader();
@@ -352,9 +372,55 @@ function formatNumberForCell(num, decimals = 2) {
   return formatNumber(num, decimals, currencyFormat);
 }
 
+function handleGridCopy(e) {
+  if (!headers.length || !csvData.length) return;
+  const active = document.activeElement;
+  if (!canHandleGridClipboard(active, cellSelection)) return;
+  if (!shouldInterceptGridCopy(active)) return;
+  if (!hasCopyableGridSelection(cellSelection, tableBody, csvData)) return;
+
+  const text = buildCopyText(tableBody, csvData);
+  const bounds = cellSelection.getSelectionBounds();
+  if (!text || !bounds) return;
+
+  e.preventDefault();
+  e.clipboardData.setData('text/plain', text);
+  cellSelection.markCopiedRange(bounds);
+}
+
 function handleGridKeydown(e) {
   if (!headers.length || !csvData.length) return;
   const active = document.activeElement;
+
+  const hasMod = e.ctrlKey || e.metaKey;
+  if (hasMod && e.key.toLowerCase() === 'c') {
+    if (!canHandleGridClipboard(active, cellSelection)) return;
+    if (!shouldInterceptGridCopy(active)) return;
+    if (!hasCopyableGridSelection(cellSelection, tableBody, csvData)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    copySelectionToClipboard();
+    return;
+  }
+
+  if (hasMod && e.key.toLowerCase() === 'v') {
+    if (!canHandleGridClipboard(active, cellSelection)) return;
+    if (
+      active &&
+      (active.tagName === 'INPUT' ||
+        active.tagName === 'TEXTAREA' ||
+        active.tagName === 'SELECT') &&
+      !active.classList?.contains('column-filter') &&
+      active.id !== 'cellValueDisplay'
+    ) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    pasteFromClipboard();
+    return;
+  }
+
   if (
     active &&
     (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')
@@ -362,18 +428,6 @@ function handleGridKeydown(e) {
     return;
   if (active && active.isContentEditable) return;
   if (cellSelection.isEditingCell(active)) return;
-
-  const hasMod = e.ctrlKey || e.metaKey;
-  if (hasMod && e.key.toLowerCase() === 'c') {
-    e.preventDefault();
-    copySelectionToClipboard();
-    return;
-  }
-  if (hasMod && e.key.toLowerCase() === 'v') {
-    e.preventDefault();
-    pasteFromClipboard();
-    return;
-  }
 
   const moveMap = {
     ArrowUp: { deltaRow: -1, deltaCol: 0 },
@@ -409,21 +463,10 @@ function handleGridKeydown(e) {
 
 async function copySelectionToClipboard() {
   const bounds = cellSelection.getSelectionBounds();
-  if (!bounds) return;
-
-  const rows = [];
-  for (let r = bounds.minRow; r <= bounds.maxRow; r += 1) {
-    const rowEl = tableBody.querySelector(`tr[data-row-index="${r}"]`);
-    if (!rowEl || rowEl.style.display === 'none') continue;
-    const rowValues = [];
-    for (let c = bounds.minCol; c <= bounds.maxCol; c += 1) {
-      rowValues.push(csvData[r]?.[c] ?? '');
-    }
-    rows.push(rowValues.join('\t'));
-  }
-  if (!rows.length) return;
+  const text = buildCopyText(tableBody, csvData);
+  if (!bounds || !text) return;
   cellSelection.markCopiedRange(bounds);
-  await writeClipboardText(rows.join('\n'));
+  await copyTextToClipboard(text);
 }
 
 async function pasteFromClipboard() {
@@ -468,26 +511,6 @@ async function pasteFromClipboard() {
     parseNumber,
     sourceFormat
   );
-}
-
-async function writeClipboardText(text) {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return;
-    } catch {
-      // fallback below
-    }
-  }
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.setAttribute('readonly', '');
-  textarea.style.position = 'absolute';
-  textarea.style.left = '-9999px';
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand('copy');
-  document.body.removeChild(textarea);
 }
 
 async function readClipboardText() {
@@ -585,18 +608,26 @@ function convertColumns(columnIndexes) {
 
 // Download CSV/Excel é tratado em shared/download-utils.js
 
-// Resetar editor
-function resetEditor() {
-  if (confirm('Deseja criar um novo arquivo? Os dados atuais serão perdidos.')) {
-    csvData = [];
-    headers = [];
-    rowIds = [];
-    delimiter = ',';
-    cellSelection.reset();
-    sheetHeader.reset();
-    showDropZone(dropZone, editorContainer);
-    toggleUploadLoader(false);
-    setUploadProgress(0);
-    fileInput.value = '';
-  }
+function openNewFileModal() {
+  newFileModal.classList.add('is-open');
+  newFileModal.setAttribute('aria-hidden', 'false');
+}
+
+function closeNewFileModal() {
+  newFileModal.classList.remove('is-open');
+  newFileModal.setAttribute('aria-hidden', 'true');
+}
+
+function confirmNewFile() {
+  csvData = [];
+  headers = [];
+  rowIds = [];
+  delimiter = ',';
+  cellSelection.reset();
+  sheetHeader.reset();
+  showDropZone(dropZone, editorContainer);
+  toggleUploadLoader(false);
+  setUploadProgress(0);
+  fileInput.value = '';
+  closeNewFileModal();
 }

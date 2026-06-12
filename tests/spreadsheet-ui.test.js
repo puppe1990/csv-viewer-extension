@@ -45,23 +45,17 @@ describe('formatSheetStats', () => {
 
 describe('getFormulaBarValue', () => {
   test('shows selected cell value', () => {
-    const value = getFormulaBarValue(
-      { minRow: 0, maxRow: 0, minCol: 1, maxCol: 1 },
-      [['Nome', 'João']],
-      null
-    );
+    const value = getFormulaBarValue({ minRow: 0, maxRow: 0, minCol: 1, maxCol: 1 }, [
+      ['Nome', 'João']
+    ]);
     expect(value).toBe('João');
   });
 
   test('shows selection count for ranges', () => {
-    const value = getFormulaBarValue(
-      { minRow: 0, maxRow: 1, minCol: 0, maxCol: 1 },
-      [
-        ['A', 'B'],
-        ['C', 'D']
-      ],
-      null
-    );
+    const value = getFormulaBarValue({ minRow: 0, maxRow: 1, minCol: 0, maxCol: 1 }, [
+      ['A', 'B'],
+      ['C', 'D']
+    ]);
     expect(value).toBe('4 células selecionadas');
   });
 });
