@@ -1,4 +1,4 @@
-const { formatNumber, getDecimalCount, parseNumber, isDateLikeValue } = require('../shared/number-utils');
+const { formatNumber, getDecimalCount, parseNumber, isDateLikeValue, isSummableValue } = require('../shared/number-utils');
 
 describe('formatNumber', () => {
   test('formats number in pt-BR format', () => {
@@ -82,6 +82,30 @@ describe('isDateLikeValue', () => {
     expect(isDateLikeValue('120')).toBe(false);
     expect(isDateLikeValue('Entrada')).toBe(false);
     expect(isDateLikeValue(null)).toBe(false);
+  });
+});
+
+describe('isSummableValue', () => {
+  test('rejects text descriptions', () => {
+    expect(isSummableValue('Pix recebido de BEATRIZ VITORIA FERREIRA DA SILVA')).toBe(false);
+    expect(isSummableValue('TRANSF ENVIADA PIX')).toBe(false);
+  });
+
+  test('rejects category and type labels', () => {
+    expect(isSummableValue('Entrada')).toBe(false);
+    expect(isSummableValue('Outros')).toBe(false);
+    expect(isSummableValue('Dinheiro')).toBe(false);
+  });
+
+  test('accepts currency and plain numeric values', () => {
+    expect(isSummableValue('R$ 120,00')).toBe(true);
+    expect(isSummableValue('1.234,56')).toBe(true);
+    expect(isSummableValue('120,00')).toBe(true);
+    expect(isSummableValue('-49,90')).toBe(true);
+  });
+
+  test('rejects date values', () => {
+    expect(isSummableValue('09/06/2026')).toBe(false);
   });
 });
 

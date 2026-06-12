@@ -1,4 +1,4 @@
-import { isDateLikeValue } from './number-utils.js';
+import { isSummableValue } from './number-utils.js';
 
 export function applyFilters(state, dom) {
   const rows = dom.tableBody.querySelectorAll('tr');
@@ -31,8 +31,6 @@ function applyColgroup(table, section, widths) {
 export function syncTableLayout(dom) {
   const headerTable = dom.tableHead?.closest('table');
   const bodyTable = dom.tableBody?.closest('table');
-  const headWrap = dom.tableHead?.closest('.table-head-wrap');
-  const bodyWrap = dom.tableBody?.closest('.table-body-wrap');
   if (!headerTable || !bodyTable) return;
 
   const headerRow = dom.tableHead.querySelector('tr:first-child');
@@ -41,19 +39,18 @@ export function syncTableLayout(dom) {
 
   const headerCells = [...headerRow.children];
   const bodyCells = [...bodyRow.children];
+  const footerRow = dom.tableFoot.querySelector('tr');
+  const footerCells = footerRow ? [...footerRow.children] : [];
   const widths = headerCells.map((cell, index) =>
-    Math.ceil(Math.max(cell.getBoundingClientRect().width, bodyCells[index]?.getBoundingClientRect().width || 0))
+    Math.ceil(Math.max(
+      cell.getBoundingClientRect().width,
+      bodyCells[index]?.getBoundingClientRect().width || 0,
+      footerCells[index]?.getBoundingClientRect().width || 0
+    ))
   );
 
   applyColgroup(headerTable, dom.tableHead, widths);
   applyColgroup(bodyTable, dom.tableBody, widths);
-
-  if (headWrap && bodyWrap && !dom._scrollSyncAttached) {
-    bodyWrap.addEventListener('scroll', () => {
-      headWrap.scrollLeft = bodyWrap.scrollLeft;
-    });
-    dom._scrollSyncAttached = true;
-  }
 }
 
 function getVisibleRowIndexes(dom) {
@@ -75,7 +72,7 @@ export function calculateColumnSum(rows, columnIndex, parseNumber, sourceFormat,
     const row = rows[rowIndex];
     if (!row) return;
     const value = row[columnIndex];
-    if (value && !isDateLikeValue(value)) {
+    if (isSummableValue(value)) {
       const num = parseNumber(value, sourceFormat);
       if (num !== null) {
         sum += num;

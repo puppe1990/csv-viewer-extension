@@ -76,6 +76,41 @@ describe('calculateColumnSum', () => {
     expect(result).toBeNull();
   });
 
+  test('does not sum text with digits embedded in description', () => {
+    const rows = [
+      ['Pix recebido de João, ref 12345'],
+      ['TRANSF ENVIADA PIX agencia 0001']
+    ];
+    const result = calculateColumnSum(rows, 0, parseNumber, 'auto');
+    expect(result).toBeNull();
+  });
+
+  test('does not sum text descriptions with embedded digits', () => {
+    const rows = [
+      ['Pix recebido de BEATRIZ VITORIA FERREIRA DA SILVA'],
+      ['Pix recebido de Marcilene Pereira Moura'],
+      ['TRANSF ENVIADA PIX'],
+      ['Pix recebido de MARIA ANTONIELE S COSTA'],
+      ['Pix recebido de Francisco Leonardo Soares Fernandes'],
+      ['TRANSF ENVIADA PIX']
+    ];
+    const result = calculateColumnSum(rows, 0, parseNumber, 'auto');
+    expect(result).toBeNull();
+  });
+
+  test('does not sum category or type text columns', () => {
+    const rows = [
+      ['Entrada'],
+      ['Saida'],
+      ['Outros'],
+      ['PJ'],
+      ['PIX'],
+      ['Dinheiro']
+    ];
+    const result = calculateColumnSum(rows, 0, parseNumber, 'pt-BR');
+    expect(result).toBeNull();
+  });
+
   test('still sums currency values when another column has dates', () => {
     const rows = [
       ['05/06/2026', 'R$ 120,00'],
@@ -231,5 +266,13 @@ describe('applyFilters + updateSums integration', () => {
     const cells = dom.tableFoot.querySelectorAll('.sum-cell');
     expect(cells[0].textContent).toBe('');
     expect(cells[3].textContent).toBe('319,80');
+  });
+
+  test('updateSums does not sum DESCRIÇÃO text column', () => {
+    applyFilters(state, dom);
+    updateSums(state, dom, formatFn, parseNumber, sourceFormat);
+
+    const cells = dom.tableFoot.querySelectorAll('.sum-cell');
+    expect(cells[1].textContent).toBe('');
   });
 });
