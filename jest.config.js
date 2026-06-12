@@ -12,7 +12,8 @@ module.exports = {
     '/tests/spreadsheet-ui.test.js',
     '/tests/clipboard-utils.test.js',
     '/tests/clipboard-shortcuts.test.js',
-    '/tests/font-scale.test.js'
+    '/tests/font-scale.test.js',
+    '/tests/cell-clear.test.js'
   ],
   collectCoverageFrom: ['shared/**/*.js'],
   coverageDirectory: 'coverage',

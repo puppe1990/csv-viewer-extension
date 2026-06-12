@@ -32,6 +32,11 @@ import {
   hasCopyableGridSelection,
   shouldInterceptGridCopy
 } from './shared/clipboard-utils.js';
+import {
+  canClearGridSelection,
+  clearVisibleSelectedCells,
+  isClearSelectionKey
+} from './shared/cell-clear.js';
 
 // Estado da aplicação
 let csvData = [];
@@ -459,6 +464,15 @@ function handleGridKeydown(e) {
     return;
   }
 
+  if (isClearSelectionKey(e.key)) {
+    if (!canClearGridSelection(active, cellSelection)) return;
+    if (!cellSelection.getSelectionBounds()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    clearSelectedCells();
+    return;
+  }
+
   if (
     active &&
     (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')
@@ -497,6 +511,22 @@ function handleGridKeydown(e) {
     }
     updateSheetHeader();
   }
+}
+
+function clearSelectedCells() {
+  const cleared = clearVisibleSelectedCells(tableBody, csvData);
+  if (!cleared) return;
+
+  cellSelection.clearCopiedRange();
+  applyFilters({ headers, csvData, columnFilters, sortState }, { tableHead, tableBody, tableFoot });
+  updateSums(
+    { headers, csvData, columnFilters, sortState },
+    { tableHead, tableBody, tableFoot },
+    formatNumberForCell,
+    parseNumber,
+    sourceFormat
+  );
+  updateSheetHeader();
 }
 
 async function copySelectionToClipboard() {

@@ -32,6 +32,11 @@ import {
   hasCopyableGridSelection,
   shouldInterceptGridCopy
 } from './shared/clipboard-utils.js';
+import {
+  canClearGridSelection,
+  clearVisibleSelectedCells,
+  isClearSelectionKey
+} from './shared/cell-clear.js';
 
 // Estado da aplicação
 let csvData = [];
@@ -217,6 +222,15 @@ function handleGridKeydown(e) {
     e.preventDefault();
     e.stopPropagation();
     pasteFromClipboard();
+    return;
+  }
+
+  if (isClearSelectionKey(e.key)) {
+    if (!canClearGridSelection(active, cellSelection)) return;
+    if (!cellSelection.getSelectionBounds()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    clearSelectedCells();
     return;
   }
 
@@ -521,6 +535,22 @@ function toggleSort(columnIndex) {
 // Formatar número
 function formatNumberForCell(num, decimals = 2) {
   return formatNumber(num, decimals, currencyFormat);
+}
+
+function clearSelectedCells() {
+  const cleared = clearVisibleSelectedCells(tableBody, csvData);
+  if (!cleared) return;
+
+  cellSelection.clearCopiedRange();
+  applyFilters({ headers, csvData, columnFilters, sortState }, { tableHead, tableBody, tableFoot });
+  updateSums(
+    { headers, csvData, columnFilters, sortState },
+    { tableHead, tableBody, tableFoot },
+    formatNumberForCell,
+    parseNumber,
+    sourceFormat
+  );
+  updateSheetHeader();
 }
 
 async function copySelectionToClipboard() {
