@@ -11,6 +11,15 @@ import {
 } from './shared/file-type-utils.js';
 import { formatNumber, getDecimalCount, parseNumber } from './shared/number-utils.js';
 import { loadPreference, savePreference } from './shared/storage-utils.js';
+import {
+  applyFontScale,
+  clampFontScale,
+  decreaseFontScale,
+  formatFontScaleLabel,
+  increaseFontScale,
+  FONT_SCALE_MAX,
+  FONT_SCALE_MIN
+} from './shared/font-scale.js';
 import { createCellSelection } from './shared/cell-selection.js';
 import { applyFilters, renderTable, updateSums } from './shared/table-renderer.js';
 import { showDropZone, showEditor } from './shared/ui-state.js';
@@ -34,6 +43,7 @@ let delimiter = ',';
 let selectedColumnIndex = null;
 let columnFilters = [];
 let sortState = { columnIndex: null, direction: null };
+let tableFontScale = 1;
 const cellSelection = createCellSelection();
 
 // Elementos DOM
@@ -65,6 +75,9 @@ const convertSelectAll = document.getElementById('convertSelectAll');
 const convertClearAll = document.getElementById('convertClearAll');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 const clearSortBtn = document.getElementById('clearSortBtn');
+const decreaseFontBtn = document.getElementById('decreaseFontBtn');
+const increaseFontBtn = document.getElementById('increaseFontBtn');
+const fontSizeLabel = document.getElementById('fontSizeLabel');
 
 const sheetHeader = createSheetHeaderController({
   fileNameEl: document.getElementById('fileNameDisplay'),
@@ -128,6 +141,12 @@ newFileModal.addEventListener('click', (e) => {
 convertColumnBtn.addEventListener('click', openConvertModal);
 clearFiltersBtn.addEventListener('click', clearFilters);
 clearSortBtn.addEventListener('click', clearSort);
+decreaseFontBtn.addEventListener('click', () =>
+  setTableFontScale(decreaseFontScale(tableFontScale))
+);
+increaseFontBtn.addEventListener('click', () =>
+  setTableFontScale(increaseFontScale(tableFontScale))
+);
 tableBody.addEventListener('focusin', updateSheetHeader);
 convertModalClose.addEventListener('click', closeConvertModal);
 convertCancelBtn.addEventListener('click', closeConvertModal);
@@ -142,6 +161,25 @@ document.addEventListener('copy', handleGridCopy);
 document.addEventListener('mouseup', () => {
   if (cellSelection.isSelectingActive()) cellSelection.stopSelection();
   updateSheetHeader();
+});
+
+function updateFontScaleUi() {
+  applyFontScale(editorContainer, tableFontScale);
+  if (fontSizeLabel) fontSizeLabel.textContent = formatFontScaleLabel(tableFontScale);
+  if (decreaseFontBtn) decreaseFontBtn.disabled = tableFontScale <= FONT_SCALE_MIN;
+  if (increaseFontBtn) increaseFontBtn.disabled = tableFontScale >= FONT_SCALE_MAX;
+}
+
+function setTableFontScale(scale) {
+  tableFontScale = clampFontScale(scale);
+  updateFontScaleUi();
+  savePreference('tableFontScale', tableFontScale);
+}
+
+updateFontScaleUi();
+
+loadPreference('tableFontScale').then((stored) => {
+  if (stored) setTableFontScale(stored);
 });
 
 // Carregar formato de moeda salvo

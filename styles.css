@@ -208,6 +208,7 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--surface-base);
+  --sheet-font-scale: 1;
 }
 
 /* ── Sheet header (Excel / Sheets style) ─────────────────── */
@@ -456,6 +457,61 @@ body {
   box-shadow: 0 0 0 2px var(--accent-muted);
 }
 
+.ribbon-font-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.15rem;
+  height: 52px;
+}
+
+.ribbon-font-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s var(--ease-out),
+    border-color 0.15s var(--ease-out),
+    color 0.15s var(--ease-out);
+}
+
+.ribbon-font-btn:hover:not(:disabled) {
+  background: var(--surface-sunken);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.ribbon-font-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ribbon-font-btn--decrease {
+  font-size: 0.7rem;
+}
+
+.ribbon-font-btn--increase {
+  font-size: 0.85rem;
+}
+
+.ribbon-font-label {
+  min-width: 42px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  line-height: 28px;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -565,12 +621,12 @@ body {
 
 .csv-table th,
 .csv-table td {
-  padding: 0.5rem 0.75rem;
+  padding: calc(0.5rem * var(--sheet-font-scale)) calc(0.75rem * var(--sheet-font-scale));
   text-align: left;
-  min-width: 100px;
+  min-width: calc(100px * var(--sheet-font-scale));
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--sheet-font-scale));
 }
 
 .csv-table th:last-child,
@@ -581,7 +637,7 @@ body {
 .csv-table thead th {
   background: var(--surface-sunken);
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--sheet-font-scale));
   color: var(--text-secondary);
   user-select: none;
   letter-spacing: 0.01em;
@@ -614,7 +670,7 @@ body {
   color: var(--text-tertiary);
   border-radius: 4px;
   padding: 0.05rem 0.3rem;
-  font-size: 0.6rem;
+  font-size: calc(0.6rem * var(--sheet-font-scale));
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -647,11 +703,11 @@ body {
 
 .row-number-header,
 .row-number-cell {
-  width: 52px;
-  min-width: 52px;
+  width: calc(52px * var(--sheet-font-scale));
+  min-width: calc(52px * var(--sheet-font-scale));
   text-align: right;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: calc(0.7rem * var(--sheet-font-scale));
   font-weight: 500;
   color: var(--text-tertiary);
   background: var(--surface-base);
@@ -668,11 +724,11 @@ body {
 
 .column-filter {
   width: 100%;
-  padding: 0.3rem 0.45rem;
+  padding: calc(0.3rem * var(--sheet-font-scale)) calc(0.45rem * var(--sheet-font-scale));
   border: 1px solid var(--border);
   border-radius: 4px;
   font-family: var(--font-sans);
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--sheet-font-scale));
   background: var(--surface-raised);
   color: var(--text-primary);
   transition: border-color 0.15s var(--ease-out);
@@ -696,7 +752,7 @@ body {
   background: var(--surface-raised);
   color: var(--text-primary);
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: calc(0.8rem * var(--sheet-font-scale));
 }
 
 .csv-table td.editable {
