@@ -40,6 +40,30 @@ export function getDecimalCount(value, format) {
   return frac.length;
 }
 
+export function isSummableValue(value) {
+  if (value === null || value === undefined) return false;
+  const str = value.toString().trim();
+  if (!str || !/\d/.test(str)) return false;
+  if (isDateLikeValue(str)) return false;
+
+  const withoutCurrency = str.replace(/^(R\$\s*|[$€£¥]\s*)/i, '').trim();
+  if (/[a-zA-ZÀ-ÿ]/.test(withoutCurrency)) return false;
+
+  return true;
+}
+
+export function isDateLikeValue(value) {
+  if (value === null || value === undefined) return false;
+  const str = value.toString().trim();
+  if (!str) return false;
+
+  return (
+    /^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(str) ||
+    /^\d{1,2}-\d{1,2}-\d{2,4}$/.test(str) ||
+    /^\d{4}-\d{2}-\d{2}$/.test(str)
+  );
+}
+
 export function parseNumber(value, format) {
   if (value === null || value === undefined) return null;
   let str = value.toString().trim();

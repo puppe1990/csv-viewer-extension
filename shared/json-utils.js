@@ -30,12 +30,12 @@ export function parseJSON(text, options = {}) {
 
   if (Array.isArray(firstItem)) {
     headers = firstItem.map((_, index) => String(index));
-    rows = records.map(row => Array.isArray(row) ? row.map(valueToCell) : [valueToCell(row)]);
+    rows = records.map((row) => (Array.isArray(row) ? row.map(valueToCell) : [valueToCell(row)]));
   } else if (typeof firstItem === 'object' && firstItem !== null) {
     headers = collectHeaders(records);
-    rows = records.map(row => {
+    rows = records.map((row) => {
       if (typeof row === 'object' && row !== null) {
-        return headers.map(header => {
+        return headers.map((header) => {
           const value = row[header];
           return valueToCell(value);
         });
@@ -44,12 +44,12 @@ export function parseJSON(text, options = {}) {
     });
   } else {
     headers = ['value'];
-    rows = records.map(item => [valueToCell(item)]);
+    rows = records.map((item) => [valueToCell(item)]);
   }
 
   if (typeof onProgress === 'function') onProgress(80);
 
-  rows = rows.map(row => {
+  rows = rows.map((row) => {
     if (row.length > headers.length) {
       const head = row.slice(0, headers.length - 1);
       const tail = row.slice(headers.length - 1).join(',');
@@ -75,10 +75,10 @@ function normalizeRoot(data) {
   if (!data || typeof data !== 'object') return data;
 
   const preferredKeys = ['data', 'rows', 'items', 'results', 'records'];
-  const preferredKey = preferredKeys.find(key => Array.isArray(data[key]));
+  const preferredKey = preferredKeys.find((key) => Array.isArray(data[key]));
   if (preferredKey) return data[preferredKey];
 
-  const firstArrayKey = Object.keys(data).find(key => Array.isArray(data[key]));
+  const firstArrayKey = Object.keys(data).find((key) => Array.isArray(data[key]));
   if (firstArrayKey) return data[firstArrayKey];
 
   return data;
@@ -88,10 +88,10 @@ function collectHeaders(records) {
   const headers = [];
   const seen = new Set();
 
-  records.forEach(record => {
+  records.forEach((record) => {
     if (!record || typeof record !== 'object' || Array.isArray(record)) return;
 
-    Object.keys(record).forEach(key => {
+    Object.keys(record).forEach((key) => {
       if (seen.has(key)) return;
       seen.add(key);
       headers.push(key);

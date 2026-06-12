@@ -1,3 +1,5 @@
+import { isSummableValue } from './number-utils.js';
+
 export function applyFilters(state, dom) {
   const rows = dom.tableBody.querySelectorAll('tr');
   rows.forEach((tr) => {
@@ -12,32 +14,73 @@ export function applyFilters(state, dom) {
   });
 }
 
-export function updateSums(state, dom, formatNumberForCell, parseNumber, sourceFormat) {
-  dom.tableFoot.innerHTML = '';
-  const footerRow = document.createElement('tr');
-
-  const spacer = document.createElement('td');
-  spacer.className = 'row-number-cell';
-  footerRow.appendChild(spacer);
-
-  state.headers.forEach((_, colIndex) => {
-    const td = document.createElement('td');
-    const sum = calculateColumnSum(state.csvData, colIndex, parseNumber, sourceFormat);
-    td.className = 'sum-cell';
-    td.textContent = sum !== null ? formatNumberForCell(sum, 2) : '';
-    footerRow.appendChild(td);
+function applyColgroup(table, section, widths) {
+  table.querySelector('colgroup')?.remove();
+  const colgroup = document.createElement('colgroup');
+  widths.forEach((width) => {
+    const col = document.createElement('col');
+    col.style.width = `${width}px`;
+    colgroup.appendChild(col);
   });
-
-  dom.tableFoot.appendChild(footerRow);
+  table.insertBefore(colgroup, section);
+  table.style.tableLayout = 'fixed';
+  table.style.width = `${widths.reduce((sum, width) => sum + width, 0)}px`;
+  table.style.minWidth = '100%';
 }
 
-function calculateColumnSum(rows, columnIndex, parseNumber, sourceFormat) {
+export function syncTableLayout(dom) {
+  const headerTable = dom.tableHead?.closest('table');
+  const bodyTable = dom.tableBody?.closest('table');
+  if (!headerTable || !bodyTable) return;
+
+  const headerRow = dom.tableHead.querySelector('tr:first-child');
+  const bodyRow = dom.tableBody.querySelector('tr');
+  if (!headerRow || !bodyRow) return;
+
+  const headerCells = [...headerRow.children];
+  const bodyCells = [...bodyRow.children];
+  const footerRow = dom.tableFoot.querySelector('tr');
+  const footerCells = footerRow ? [...footerRow.children] : [];
+  const widths = headerCells.map((cell, index) =>
+    Math.ceil(
+      Math.max(
+        cell.getBoundingClientRect().width,
+        bodyCells[index]?.getBoundingClientRect().width || 0,
+        footerCells[index]?.getBoundingClientRect().width || 0
+      )
+    )
+  );
+
+  applyColgroup(headerTable, dom.tableHead, widths);
+  applyColgroup(bodyTable, dom.tableBody, widths);
+}
+
+function getVisibleRowIndexes(dom) {
+  const indexes = [];
+  dom.tableBody.querySelectorAll('tr').forEach((tr) => {
+    if (tr.style.display === 'none') return;
+    const rowIndex = parseInt(tr.dataset.rowIndex, 10);
+    if (!Number.isNaN(rowIndex)) indexes.push(rowIndex);
+  });
+  return indexes;
+}
+
+export function calculateColumnSum(
+  rows,
+  columnIndex,
+  parseNumber,
+  sourceFormat,
+  visibleRowIndexes
+) {
   let sum = 0;
   let hasNumbers = false;
+  const rowIndexes = visibleRowIndexes ?? rows.map((_, index) => index);
 
-  rows.forEach((row) => {
+  rowIndexes.forEach((rowIndex) => {
+    const row = rows[rowIndex];
+    if (!row) return;
     const value = row[columnIndex];
-    if (value) {
+    if (isSummableValue(value)) {
       const num = parseNumber(value, sourceFormat);
       if (num !== null) {
         sum += num;
@@ -47,6 +90,33 @@ function calculateColumnSum(rows, columnIndex, parseNumber, sourceFormat) {
   });
 
   return hasNumbers ? sum : null;
+}
+
+export function updateSums(state, dom, formatNumberForCell, parseNumber, sourceFormat) {
+  dom.tableFoot.innerHTML = '';
+  const footerRow = document.createElement('tr');
+
+  const spacer = document.createElement('td');
+  spacer.className = 'row-number-cell';
+  footerRow.appendChild(spacer);
+
+  const visibleRowIndexes = getVisibleRowIndexes(dom);
+
+  state.headers.forEach((_, colIndex) => {
+    const td = document.createElement('td');
+    const sum = calculateColumnSum(
+      state.csvData,
+      colIndex,
+      parseNumber,
+      sourceFormat,
+      visibleRowIndexes
+    );
+    td.className = 'sum-cell';
+    td.textContent = sum !== null ? formatNumberForCell(sum, 2) : '';
+    footerRow.appendChild(td);
+  });
+
+  dom.tableFoot.appendChild(footerRow);
 }
 
 export function renderTable({
@@ -131,6 +201,7 @@ export function renderTable({
     input.addEventListener('input', (e) => {
       state.columnFilters[index] = e.target.value;
       applyFilters(state, dom);
+      updateSums(state, dom, formatNumberForCell, parseNumber, sourceFormat);
     });
     th.appendChild(input);
     filterRow.appendChild(th);
@@ -165,8 +236,8 @@ export function renderTable({
           state.csvData[rIdx][cIdx] = e.target.textContent;
         }
         cellSelection.finishEditingCell(e.target);
-        updateSums(state, dom, formatNumberForCell, parseNumber, sourceFormat);
         applyFilters(state, dom);
+        updateSums(state, dom, formatNumberForCell, parseNumber, sourceFormat);
       });
 
       td.addEventListener('keydown', (e) => {
@@ -214,7 +285,10 @@ export function renderTable({
     dom.tableBody.appendChild(tr);
   });
 
-  updateSums(state, dom, formatNumberForCell, parseNumber, sourceFormat);
   applyFilters(state, dom);
-  if (onAfterRender) onAfterRender();
+  updateSums(state, dom, formatNumberForCell, parseNumber, sourceFormat);
+  requestAnimationFrame(() => {
+    syncTableLayout(dom);
+    if (onAfterRender) onAfterRender();
+  });
 }

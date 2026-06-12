@@ -17,21 +17,23 @@ Uma extensão do Chrome que permite visualizar e editar arquivos CSV e XLSX com 
 
 ## Formatos Suportados
 
-| Formato | Extensões | Leitura | Escrita |
-|---------|-----------|---------|---------|
-| CSV | `.csv` | ✅ | ✅ |
-| Excel | `.xlsx`, `.xls` | ✅ | ✅ (via Export Excel) |
+| Formato | Extensões       | Leitura | Escrita               |
+| ------- | --------------- | ------- | --------------------- |
+| CSV     | `.csv`          | ✅      | ✅                    |
+| Excel   | `.xlsx`, `.xls` | ✅      | ✅ (via Export Excel) |
 
 ## Instalação
 
 ### Passo 1: Gerar os Ícones
 
 **Opção A - Usando o Gerador HTML (Recomendado):**
+
 1. Abra o arquivo `generate-icons.html` no seu navegador
 2. Clique nos três botões para baixar os ícones
 3. Salve os arquivos na pasta da extensão
 
 **Opção B - Usando Python (se tiver Pillow instalado):**
+
 ```bash
 python3 generate_icons.py
 ```
@@ -58,11 +60,13 @@ Crie ícones de 16x16, 48x48 e 128x128 pixels usando qualquer editor de imagens 
 ## Como Usar
 
 ### Editar Células
+
 - Clique em qualquer célula para editar
 - Pressione Enter para mover para a célula abaixo
 - As alterações são salvas automaticamente
 
 ### Formatar Moeda
+
 1. (Opcional) Clique no cabeçalho de uma ou mais colunas para pré-selecionar
 2. Selecione o formato de entrada (ex.: $1,234.56 ou R$ 1.234,56)
 3. Selecione o formato de moeda desejado no menu dropdown
@@ -71,6 +75,7 @@ Crie ícones de 16x16, 48x48 e 128x128 pixels usando qualquer editor de imagens 
 6. A formatação será aplicada a todas as células numéricas das colunas selecionadas
 
 ### Soma de Colunas
+
 - A soma de cada coluna é calculada automaticamente
 - Valores numéricos são detectados e somados
 - O resultado aparece no rodapé da tabela

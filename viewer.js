@@ -35,7 +35,6 @@ const uploadLoader = document.getElementById('uploadLoader');
 const uploadLoaderBar = document.getElementById('uploadLoaderBar');
 const uploadLoaderText = document.getElementById('uploadLoaderText');
 const editorContainer = document.getElementById('editorContainer');
-const csvTable = document.getElementById('csvTable');
 const tableHead = document.getElementById('tableHead');
 const tableBody = document.getElementById('tableBody');
 const tableFoot = document.getElementById('tableFoot');
@@ -83,7 +82,11 @@ document.addEventListener('mouseup', () => {
 function handleGridKeydown(e) {
   if (!headers.length || !csvData.length) return;
   const active = document.activeElement;
-  if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) return;
+  if (
+    active &&
+    (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')
+  )
+    return;
   if (active && active.isContentEditable) return;
   if (cellSelection.isEditingCell(active)) return;
 
@@ -269,7 +272,7 @@ async function processFile(file) {
         }
       });
     }
-    
+
     setVisualProgress(95);
     headers = parsed.headers;
     csvData = parsed.rows;
@@ -344,14 +347,16 @@ function toggleSort(columnIndex) {
     const numA = parseNumber(valueA, sourceFormat);
     const numB = parseNumber(valueB, sourceFormat);
 
-    let result = 0;
-    if (numA !== null && numB !== null) {
-      result = numA - numB;
-    } else {
-      const textA = valueA.toString().toLowerCase();
-      const textB = valueB.toString().toLowerCase();
-      result = textA.localeCompare(textB, undefined, { numeric: true, sensitivity: 'base' });
-    }
+    const result =
+      numA !== null && numB !== null
+        ? numA - numB
+        : valueA
+            .toString()
+            .toLowerCase()
+            .localeCompare(valueB.toString().toLowerCase(), undefined, {
+              numeric: true,
+              sensitivity: 'base'
+            });
 
     return direction === 'asc' ? result : -result;
   });
@@ -417,8 +422,14 @@ async function pasteFromClipboard() {
     { row: maxRow, col: maxCol },
     false
   );
-  updateSums({ headers, csvData, columnFilters, sortState }, { tableHead, tableBody, tableFoot }, formatNumberForCell, parseNumber, sourceFormat);
   applyFilters({ headers, csvData, columnFilters, sortState }, { tableHead, tableBody, tableFoot });
+  updateSums(
+    { headers, csvData, columnFilters, sortState },
+    { tableHead, tableBody, tableFoot },
+    formatNumberForCell,
+    parseNumber,
+    sourceFormat
+  );
 }
 
 async function writeClipboardText(text) {
@@ -426,7 +437,7 @@ async function writeClipboardText(text) {
     try {
       await navigator.clipboard.writeText(text);
       return;
-    } catch (err) {
+    } catch {
       // fallback below
     }
   }
@@ -445,7 +456,7 @@ async function readClipboardText() {
   if (navigator.clipboard && navigator.clipboard.readText) {
     try {
       return await navigator.clipboard.readText();
-    } catch (err) {
+    } catch {
       return '';
     }
   }
@@ -472,7 +483,7 @@ function handleColumnSelection(e, columnIndex, thElement) {
     const start = Math.min(lastSelectedIndex, columnIndex);
     const end = Math.max(lastSelectedIndex, columnIndex);
     selectedColumnIndexes = [];
-    
+
     document.querySelectorAll('th.column-header').forEach((th, idx) => {
       if (idx >= start && idx <= end) {
         selectedColumnIndexes.push(idx);
@@ -493,7 +504,7 @@ function handleColumnSelection(e, columnIndex, thElement) {
     });
     lastSelectedIndex = columnIndex;
   }
-  
+
   updateSelectionIndicator();
 }
 
@@ -566,8 +577,9 @@ function toggleAllFields(checked) {
 }
 
 function applyConvertModal() {
-  const selected = Array.from(convertFieldsList.querySelectorAll('input[type="checkbox"]:checked'))
-    .map(input => parseInt(input.value, 10));
+  const selected = Array.from(
+    convertFieldsList.querySelectorAll('input[type="checkbox"]:checked')
+  ).map((input) => parseInt(input.value, 10));
 
   if (selected.length === 0) {
     alert('Selecione pelo menos uma coluna para converter.');
@@ -596,7 +608,9 @@ function convertColumns(columnIndexes) {
         if (num !== null) {
           const decimals = getDecimalCount(value, sourceFormat);
           row[colIdx] = formatNumberForCell(num, decimals);
-          const cell = document.querySelector(`td[data-row-index="${rowIndex}"][data-column-index="${colIdx}"]`);
+          const cell = document.querySelector(
+            `td[data-row-index="${rowIndex}"][data-column-index="${colIdx}"]`
+          );
           if (cell) {
             cell.textContent = row[colIdx];
           }
@@ -605,7 +619,13 @@ function convertColumns(columnIndexes) {
     });
   });
 
-  updateSums({ headers, csvData, columnFilters, sortState }, { tableHead, tableBody, tableFoot }, formatNumberForCell, parseNumber, sourceFormat);
+  updateSums(
+    { headers, csvData, columnFilters, sortState },
+    { tableHead, tableBody, tableFoot },
+    formatNumberForCell,
+    parseNumber,
+    sourceFormat
+  );
 }
 
 // Download CSV/Excel é tratado em shared/download-utils.js

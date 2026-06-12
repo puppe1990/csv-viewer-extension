@@ -23,7 +23,7 @@ describe('readFileAsText', () => {
     mockFileReader.result = 'test content';
 
     const promise = readFileAsText(mockFile);
-    
+
     mockFileReader.onload({ target: { result: 'test content' } });
 
     const result = await promise;
@@ -34,31 +34,31 @@ describe('readFileAsText', () => {
   test('uses custom encoding', async () => {
     const promise = readFileAsText(mockFile, 'ISO-8859-1');
     mockFileReader.onload({ target: { result: 'content' } });
-    
+
     await promise;
     expect(mockFileReader.readAsText).toHaveBeenCalledWith(mockFile, 'ISO-8859-1');
   });
 
   test('calls onProgress callback', async () => {
     const onProgress = jest.fn();
-    
+
     const promise = readFileAsText(mockFile, 'UTF-8', onProgress);
-    
+
     // Simulate progress event
     const mockEvent = { loaded: 50, total: 100 };
     mockFileReader.onprogress(mockEvent);
-    
+
     mockFileReader.onload({ target: { result: 'content' } });
     await promise;
-    
+
     expect(onProgress).toHaveBeenCalledWith(mockEvent);
   });
 
   test('rejects on error', async () => {
     const promise = readFileAsText(mockFile);
-    
+
     mockFileReader.onerror();
-    
+
     await expect(promise).rejects.toBe(mockFileReader.error);
   });
 });
@@ -87,7 +87,7 @@ describe('readFileAsArrayBuffer', () => {
     mockFileReader.result = mockBuffer;
 
     const promise = readFileAsArrayBuffer(mockFile);
-    
+
     mockFileReader.onload({ target: { result: mockBuffer } });
 
     const result = await promise;
@@ -97,24 +97,24 @@ describe('readFileAsArrayBuffer', () => {
 
   test('calls onProgress callback', async () => {
     const onProgress = jest.fn();
-    
+
     const promise = readFileAsArrayBuffer(mockFile, onProgress);
-    
+
     // Simulate progress event
     const mockEvent = { loaded: 50, total: 100 };
     mockFileReader.onprogress(mockEvent);
-    
+
     mockFileReader.onload({ target: { result: new ArrayBuffer(8) } });
     await promise;
-    
+
     expect(onProgress).toHaveBeenCalledWith(mockEvent);
   });
 
   test('rejects on error', async () => {
     const promise = readFileAsArrayBuffer(mockFile);
-    
+
     mockFileReader.onerror();
-    
+
     await expect(promise).rejects.toBe(mockFileReader.error);
   });
 });
