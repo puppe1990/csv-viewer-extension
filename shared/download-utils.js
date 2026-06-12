@@ -1,5 +1,5 @@
 import { serializeCSV } from './csv-utils.js';
-import { parseNumber } from './number-utils.js';
+import { isDateLikeValue, isSummableValue, parseNumber } from './number-utils.js';
 
 export function downloadBlob(blob, filename) {
   const link = document.createElement('a');
@@ -28,10 +28,13 @@ export function downloadExcel(headers, rows, sourceFormat) {
   const data = [headers.map((header) => header || '')];
   rows.forEach((row) => {
     const normalized = headers.map((_, idx) => {
-      const raw = row[idx] || '';
-      const parsed = parseNumber(raw, sourceFormat);
-      if (parsed !== null) return parsed;
-      return raw.toString();
+      const raw = (row[idx] || '').toString();
+      if (isDateLikeValue(raw)) return raw;
+      if (isSummableValue(raw)) {
+        const parsed = parseNumber(raw, sourceFormat);
+        if (parsed !== null) return parsed;
+      }
+      return raw;
     });
     data.push(normalized);
   });

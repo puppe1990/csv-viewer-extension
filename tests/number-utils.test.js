@@ -154,4 +154,13 @@ describe('parseNumber', () => {
     expect(parseNumber('$1,234.56', 'en-US')).toBe(1234.56);
     expect(parseNumber('R$ 1.234,56', 'pt-BR')).toBe(1234.56);
   });
+
+  test('incorrectly parses date strings as numbers (why Excel export skips dates)', () => {
+    expect(parseNumber('01/06/2026', 'pt-BR')).toBe(1062026);
+    expect(parseNumber('10/06/2026', 'pt-BR')).toBe(10062026);
+  });
+
+  test('incorrectly extracts digits from text (why Excel export skips non-numeric text)', () => {
+    expect(parseNumber('Pix recebido c6 de MATHEUS NUNES PUPPE', 'pt-BR')).toBe(6);
+  });
 });

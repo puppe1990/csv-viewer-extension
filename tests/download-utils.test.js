@@ -6,6 +6,7 @@ jest.mock('../shared/csv-utils', () => ({
 }));
 
 jest.mock('../shared/number-utils', () => ({
+  ...jest.requireActual('../shared/number-utils'),
   parseNumber: jest.fn()
 }));
 
@@ -101,5 +102,48 @@ describe('downloadExcel', () => {
 
     expect(parseNumber).toHaveBeenCalledWith('1.234,56', 'pt-BR');
     expect(window.XLSX.utils.aoa_to_sheet).toHaveBeenCalled();
+  });
+
+  test('preserves DD/MM/YYYY dates instead of converting to numbers', () => {
+    parseNumber.mockImplementation(jest.requireActual('../shared/number-utils').parseNumber);
+
+    downloadExcel(
+      ['Data', 'Valor'],
+      [
+        ['01/06/2026', '1.234,56'],
+        ['05/06/2026', '120,00'],
+        ['10/06/2026', '50,00']
+      ],
+      'pt-BR'
+    );
+
+    const sheetData = window.XLSX.utils.aoa_to_sheet.mock.calls[0][0];
+    expect(sheetData).toEqual([
+      ['Data', 'Valor'],
+      ['01/06/2026', 1234.56],
+      ['05/06/2026', 120],
+      ['10/06/2026', 50]
+    ]);
+    expect(parseNumber).not.toHaveBeenCalledWith('01/06/2026', 'pt-BR');
+    expect(parseNumber).not.toHaveBeenCalledWith('05/06/2026', 'pt-BR');
+    expect(parseNumber).not.toHaveBeenCalledWith('10/06/2026', 'pt-BR');
+  });
+
+  test('preserves text descriptions that contain digits', () => {
+    parseNumber.mockImplementation(jest.requireActual('../shared/number-utils').parseNumber);
+
+    const description = 'Pix recebido c6 de MATHEUS NUNES PUPPE';
+    downloadExcel(
+      ['Data', 'Descrição', 'Valor'],
+      [['01/06/2026', description, 'R$ 200,00']],
+      'pt-BR'
+    );
+
+    const sheetData = window.XLSX.utils.aoa_to_sheet.mock.calls[0][0];
+    expect(sheetData).toEqual([
+      ['Data', 'Descrição', 'Valor'],
+      ['01/06/2026', description, 200]
+    ]);
+    expect(parseNumber).not.toHaveBeenCalledWith(description, 'pt-BR');
   });
 });
