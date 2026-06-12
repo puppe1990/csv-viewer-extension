@@ -1,4 +1,10 @@
-const { formatNumber, getDecimalCount, parseNumber, isDateLikeValue, isSummableValue } = require('../shared/number-utils');
+const {
+  formatNumber,
+  getDecimalCount,
+  parseNumber,
+  isDateLikeValue,
+  isSummableValue
+} = require('../shared/number-utils');
 
 describe('formatNumber', () => {
   test('formats number in pt-BR format', () => {

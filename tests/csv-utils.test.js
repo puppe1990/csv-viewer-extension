@@ -127,7 +127,13 @@ describe('parseCSVAsync', () => {
 
 describe('serializeCSV', () => {
   test('serializes headers and rows', () => {
-    const result = serializeCSV(['A', 'B'], [['1', '2'], ['3', '4']]);
+    const result = serializeCSV(
+      ['A', 'B'],
+      [
+        ['1', '2'],
+        ['3', '4']
+      ]
+    );
     expect(result).toBe('"A","B"\n"1","2"\n"3","4"');
   });
 

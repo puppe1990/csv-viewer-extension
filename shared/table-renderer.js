@@ -42,11 +42,13 @@ export function syncTableLayout(dom) {
   const footerRow = dom.tableFoot.querySelector('tr');
   const footerCells = footerRow ? [...footerRow.children] : [];
   const widths = headerCells.map((cell, index) =>
-    Math.ceil(Math.max(
-      cell.getBoundingClientRect().width,
-      bodyCells[index]?.getBoundingClientRect().width || 0,
-      footerCells[index]?.getBoundingClientRect().width || 0
-    ))
+    Math.ceil(
+      Math.max(
+        cell.getBoundingClientRect().width,
+        bodyCells[index]?.getBoundingClientRect().width || 0,
+        footerCells[index]?.getBoundingClientRect().width || 0
+      )
+    )
   );
 
   applyColgroup(headerTable, dom.tableHead, widths);
@@ -63,7 +65,13 @@ function getVisibleRowIndexes(dom) {
   return indexes;
 }
 
-export function calculateColumnSum(rows, columnIndex, parseNumber, sourceFormat, visibleRowIndexes) {
+export function calculateColumnSum(
+  rows,
+  columnIndex,
+  parseNumber,
+  sourceFormat,
+  visibleRowIndexes
+) {
   let sum = 0;
   let hasNumbers = false;
   const rowIndexes = visibleRowIndexes ?? rows.map((_, index) => index);

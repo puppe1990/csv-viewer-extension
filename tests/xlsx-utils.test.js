@@ -18,15 +18,17 @@ describe('parseXLSX', () => {
   test('throws error if XLSX library not loaded', () => {
     const originalXLSX = global.XLSX;
     global.XLSX = undefined;
-    
+
     expect(() => parseXLSX(new ArrayBuffer(0))).toThrow('XLSX library not loaded');
-    
+
     global.XLSX = originalXLSX;
   });
 
   test('parses XLSX file with first sheet', () => {
     const mockArrayBuffer = new ArrayBuffer(100);
-    const mockWorksheet = { /* mock worksheet object */ };
+    const mockWorksheet = {
+      /* mock worksheet object */
+    };
     const mockSheetData = [
       ['Name', 'Age', 'City'],
       ['John', '30', 'NYC'],
@@ -35,7 +37,7 @@ describe('parseXLSX', () => {
 
     mockXLSX.read.mockReturnValue({
       SheetNames: ['Sheet1'],
-      Sheets: { 'Sheet1': mockWorksheet }
+      Sheets: { Sheet1: mockWorksheet }
     });
 
     mockXLSX.utils.sheet_to_json.mockReturnValue(mockSheetData);
@@ -43,7 +45,10 @@ describe('parseXLSX', () => {
     const result = parseXLSX(mockArrayBuffer);
 
     expect(mockXLSX.read).toHaveBeenCalledWith(mockArrayBuffer, { type: 'array' });
-    expect(mockXLSX.utils.sheet_to_json).toHaveBeenCalledWith(mockWorksheet, { header: 1, def: '' });
+    expect(mockXLSX.utils.sheet_to_json).toHaveBeenCalledWith(mockWorksheet, {
+      header: 1,
+      def: ''
+    });
     expect(result.headers).toEqual(['Name', 'Age', 'City']);
     expect(result.rows).toEqual([
       ['John', '30', 'NYC'],
@@ -65,7 +70,7 @@ describe('parseXLSX', () => {
     const mockArrayBuffer = new ArrayBuffer(100);
     mockXLSX.read.mockReturnValue({
       SheetNames: ['Sheet1'],
-      Sheets: { 'Sheet1': {} }
+      Sheets: { Sheet1: {} }
     });
     mockXLSX.utils.sheet_to_json.mockReturnValue([]);
 
@@ -86,7 +91,7 @@ describe('parseXLSX', () => {
 
     mockXLSX.read.mockReturnValue({
       SheetNames: ['Sheet1'],
-      Sheets: { 'Sheet1': mockWorksheet }
+      Sheets: { Sheet1: mockWorksheet }
     });
 
     mockXLSX.utils.sheet_to_json.mockReturnValue(mockSheetData);
@@ -107,7 +112,7 @@ describe('parseXLSX', () => {
 
     mockXLSX.read.mockReturnValue({
       SheetNames: ['Sheet1'],
-      Sheets: { 'Sheet1': {} }
+      Sheets: { Sheet1: {} }
     });
     mockXLSX.utils.sheet_to_json.mockReturnValue([
       ['A', 'B'],
@@ -127,10 +132,10 @@ describe('parseXLSX', () => {
 describe('parseXLSXAsync', () => {
   test('calls parseXLSX with same parameters', async () => {
     const mockArrayBuffer = new ArrayBuffer(100);
-    
+
     mockXLSX.read.mockReturnValue({
       SheetNames: ['Sheet1'],
-      Sheets: { 'Sheet1': {} }
+      Sheets: { Sheet1: {} }
     });
     mockXLSX.utils.sheet_to_json.mockReturnValue([
       ['A', 'B'],

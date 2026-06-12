@@ -5,7 +5,7 @@ export function createCellSelection() {
   let selectionStartCell = null;
   let editingCell = null;
   let keyboardAnchorCell = null;
-  let copiedBounds = null;
+  let _copiedBounds = null;
 
   function cellKey(row, col) {
     return `${row}:${col}`;
@@ -22,13 +22,13 @@ export function createCellSelection() {
     document.querySelectorAll('td.cell-copied').forEach((cell) => {
       cell.classList.remove('cell-copied');
     });
-    copiedBounds = null;
+    _copiedBounds = null;
   }
 
   function markCopiedRange(bounds) {
     clearCopiedRange();
     if (!bounds) return;
-    copiedBounds = bounds;
+    _copiedBounds = bounds;
     for (let r = bounds.minRow; r <= bounds.maxRow; r += 1) {
       for (let c = bounds.minCol; c <= bounds.maxCol; c += 1) {
         const cell = document.querySelector(`td[data-row-index="${r}"][data-column-index="${c}"]`);

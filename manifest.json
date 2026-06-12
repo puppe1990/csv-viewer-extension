@@ -3,9 +3,7 @@
   "name": "CSV Viewer & Editor",
   "version": "1.0.0",
   "description": "Visualize e edite arquivos CSV com funcionalidades tipo Excel, incluindo soma de colunas e formatação de moeda",
-  "permissions": [
-    "storage"
-  ],
+  "permissions": ["storage"],
   "action": {
     "default_icon": {
       "16": "icon16.png",

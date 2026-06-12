@@ -16,6 +16,7 @@ A extensão precisa de 3 ícones para funcionar corretamente. Você pode criar �
 ## Opção 2: Criar Manualmente
 
 Use qualquer editor de imagens (Photoshop, GIMP, Paint, etc.) para criar:
+
 - `icon16.png` (16x16 pixels)
 - `icon48.png` (48x48 pixels)
 - `icon128.png` (128x128 pixels)
@@ -25,6 +26,7 @@ Sugestão de design: Use um ícone de planilha/tabela ou CSV com cores roxas/azu
 ## Opção 3: Usar Ícones Temporários
 
 Você pode usar qualquer imagem PNG e redimensionar para os tamanhos necessários usando ferramentas online como:
+
 - https://www.iloveimg.com/resize-image
 - https://imageresizer.com/
 

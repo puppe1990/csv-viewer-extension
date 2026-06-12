@@ -31,9 +31,9 @@ export function parseXLSX(arrayBuffer, options = {}) {
     return { headers: [], rows: [], delimiter: ',' };
   }
 
-  const headers = jsonData[0].map(h => String(h));
-  const rows = jsonData.slice(1).map(row => {
-    const normalizedRow = row.map(cell => String(cell));
+  const headers = jsonData[0].map((h) => String(h));
+  const rows = jsonData.slice(1).map((row) => {
+    const normalizedRow = row.map((cell) => String(cell));
     // Ensure row has same length as headers
     if (normalizedRow.length < headers.length) {
       return [...normalizedRow, ...Array(headers.length - normalizedRow.length).fill('')];

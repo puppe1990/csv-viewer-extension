@@ -1,5 +1,5 @@
 // Service Worker para abrir a página fullscreen quando o usuário clicar no ícone
-chrome.action.onClicked.addListener((tab) => {
+chrome.action.onClicked.addListener((_tab) => {
   chrome.tabs.create({
     url: chrome.runtime.getURL('viewer.html')
   });

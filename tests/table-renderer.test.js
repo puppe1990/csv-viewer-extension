@@ -6,81 +6,49 @@ describe('calculateColumnSum', () => {
   const sourceFormat = 'en-US';
 
   test('sums all numeric values in a column', () => {
-    const rows = [
-      ['10'],
-      ['20'],
-      ['30']
-    ];
+    const rows = [['10'], ['20'], ['30']];
     const result = calculateColumnSum(rows, 0, parseNumber, sourceFormat);
     expect(result).toBe(60);
   });
 
   test('returns null when no numeric values exist', () => {
-    const rows = [
-      ['abc'],
-      ['def']
-    ];
+    const rows = [['abc'], ['def']];
     const result = calculateColumnSum(rows, 0, parseNumber, sourceFormat);
     expect(result).toBeNull();
   });
 
   test('sums only visible rows when visibleRowIndexes is provided', () => {
-    const rows = [
-      ['10'],
-      ['20'],
-      ['30'],
-      ['40']
-    ];
+    const rows = [['10'], ['20'], ['30'], ['40']];
     const result = calculateColumnSum(rows, 0, parseNumber, sourceFormat, [0, 2]);
     expect(result).toBe(40);
   });
 
   test('sums only visible rows with pt-BR format', () => {
-    const rows = [
-      ['1.000,50'],
-      ['2.000,25'],
-      ['3.000,00'],
-      ['4.000,75']
-    ];
+    const rows = [['1.000,50'], ['2.000,25'], ['3.000,00'], ['4.000,75']];
     const result = calculateColumnSum(rows, 0, parseNumber, 'pt-BR', [1, 3]);
     expect(result).toBeCloseTo(6001, 0);
   });
 
   test('returns null when visibleRowIndexes is empty', () => {
-    const rows = [
-      ['10'],
-      ['20']
-    ];
+    const rows = [['10'], ['20']];
     const result = calculateColumnSum(rows, 0, parseNumber, sourceFormat, []);
     expect(result).toBeNull();
   });
 
   test('skips non-numeric values in visible rows', () => {
-    const rows = [
-      ['10'],
-      ['abc'],
-      ['30']
-    ];
+    const rows = [['10'], ['abc'], ['30']];
     const result = calculateColumnSum(rows, 0, parseNumber, sourceFormat, [0, 1, 2]);
     expect(result).toBe(40);
   });
 
   test('does not sum date values in a column', () => {
-    const rows = [
-      ['05/06/2026'],
-      ['09/06/2026'],
-      ['10/06/2026'],
-      ['11/06/2026']
-    ];
+    const rows = [['05/06/2026'], ['09/06/2026'], ['10/06/2026'], ['11/06/2026']];
     const result = calculateColumnSum(rows, 0, parseNumber, 'pt-BR');
     expect(result).toBeNull();
   });
 
   test('does not sum text with digits embedded in description', () => {
-    const rows = [
-      ['Pix recebido de João, ref 12345'],
-      ['TRANSF ENVIADA PIX agencia 0001']
-    ];
+    const rows = [['Pix recebido de João, ref 12345'], ['TRANSF ENVIADA PIX agencia 0001']];
     const result = calculateColumnSum(rows, 0, parseNumber, 'auto');
     expect(result).toBeNull();
   });
@@ -99,14 +67,7 @@ describe('calculateColumnSum', () => {
   });
 
   test('does not sum category or type text columns', () => {
-    const rows = [
-      ['Entrada'],
-      ['Saida'],
-      ['Outros'],
-      ['PJ'],
-      ['PIX'],
-      ['Dinheiro']
-    ];
+    const rows = [['Entrada'], ['Saida'], ['Outros'], ['PJ'], ['PIX'], ['Dinheiro']];
     const result = calculateColumnSum(rows, 0, parseNumber, 'pt-BR');
     expect(result).toBeNull();
   });
@@ -171,7 +132,11 @@ describe('updateSums with filters', () => {
     const dom = createMockDom();
     const state = {
       headers: ['A', 'B'],
-      csvData: [['10', '20'], ['30', '40'], ['50', '60']],
+      csvData: [
+        ['10', '20'],
+        ['30', '40'],
+        ['50', '60']
+      ],
       columnFilters: ['', ''],
       sortState: { columnIndex: null, direction: null }
     };

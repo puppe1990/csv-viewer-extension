@@ -23,18 +23,12 @@ describe('parseJSON', () => {
   test('parses array of primitives', () => {
     const result = parseJSON('[1,2,3]');
     expect(result.headers).toEqual(['value']);
-    expect(result.rows).toEqual([
-      ['1'],
-      ['2'],
-      ['3']
-    ]);
+    expect(result.rows).toEqual([['1'], ['2'], ['3']]);
   });
 
   test('handles null values', () => {
     const result = parseJSON('[{"name":"John","age":null}]');
-    expect(result.rows).toEqual([
-      ['John', '']
-    ]);
+    expect(result.rows).toEqual([['John', '']]);
   });
 
   test('handles empty array', () => {
@@ -80,18 +74,13 @@ describe('parseJSON', () => {
   test('parses root object with data array', () => {
     const result = parseJSON('{"data":[{"name":"John"},{"name":"Jane"}],"total":2}');
     expect(result.headers).toEqual(['name']);
-    expect(result.rows).toEqual([
-      ['John'],
-      ['Jane']
-    ]);
+    expect(result.rows).toEqual([['John'], ['Jane']]);
   });
 
   test('serializes nested JSON values inside cells', () => {
     const result = parseJSON('[{"id":1,"meta":{"active":true},"tags":["a","b"]}]');
     expect(result.headers).toEqual(['id', 'meta', 'tags']);
-    expect(result.rows).toEqual([
-      ['1', '{"active":true}', '["a","b"]']
-    ]);
+    expect(result.rows).toEqual([['1', '{"active":true}', '["a","b"]']]);
   });
 });
 
