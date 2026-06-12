@@ -13,6 +13,7 @@ import { formatNumber, getDecimalCount, parseNumber } from './shared/number-util
 import { loadPreference, savePreference } from './shared/storage-utils.js';
 import { createCellSelection } from './shared/cell-selection.js';
 import { applyFilters, renderTable, updateSums } from './shared/table-renderer.js';
+import { showDropZone, showEditor } from './shared/ui-state.js';
 
 // Estado da aplicação
 let csvData = [];
@@ -223,8 +224,7 @@ async function processFile(file) {
     await waitForNextFrame();
     setVisualProgress(100);
     await waitForNextFrame();
-    dropZone.style.display = 'none';
-    editorContainer.style.display = 'flex';
+    showEditor(dropZone, editorContainer);
   } catch {
     toggleUploadLoader(false);
     setUploadProgress(0);
@@ -532,8 +532,7 @@ function resetEditor() {
     csvData = [];
     headers = [];
     delimiter = ',';
-    editorContainer.style.display = 'none';
-    dropZone.style.display = 'flex';
+    showDropZone(dropZone, editorContainer);
     toggleUploadLoader(false);
     setUploadProgress(0);
     fileInput.value = '';

@@ -4,7 +4,7 @@
   "description": "Uma extensão do Chrome que permite visualizar e editar arquivos CSV com funcionalidades similares ao Excel, incluindo edição de células, soma automática de colunas e formatação de moeda.",
   "main": "app.js",
   "scripts": {
-    "test": "vitest run tests/table-renderer.test.js && jest",
+    "test": "vitest run tests/table-renderer.test.js tests/ui-state.test.js && jest",
     "test:watch": "vitest tests/table-renderer.test.js",
     "test:coverage": "vitest run tests/table-renderer.test.js --coverage && jest --coverage",
     "test:vitest": "vitest run",

@@ -5,7 +5,11 @@ module.exports = {
   },
   moduleFileExtensions: ['js'],
   testMatch: ['**/tests/**/*.test.js'],
-  testPathIgnorePatterns: ['/node_modules/', '/tests/table-renderer.test.js'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/tests/table-renderer.test.js',
+    '/tests/ui-state.test.js'
+  ],
   collectCoverageFrom: ['shared/**/*.js'],
   coverageDirectory: 'coverage',
   verbose: true
