@@ -14,10 +14,12 @@ import { loadPreference, savePreference } from './shared/storage-utils.js';
 import { createCellSelection } from './shared/cell-selection.js';
 import { applyFilters, renderTable, updateSums } from './shared/table-renderer.js';
 import { showDropZone, showEditor } from './shared/ui-state.js';
+import { createSheetHeaderController } from './shared/spreadsheet-ui.js';
 
 // Estado da aplicação
 let csvData = [];
 let headers = [];
+let rowIds = [];
 let currencyFormat = 'pt-BR';
 let sourceFormat = 'auto';
 let delimiter = ',';
@@ -49,6 +51,51 @@ const convertCancelBtn = document.getElementById('convertCancelBtn');
 const convertApplyBtn = document.getElementById('convertApplyBtn');
 const convertSelectAll = document.getElementById('convertSelectAll');
 const convertClearAll = document.getElementById('convertClearAll');
+const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+const clearSortBtn = document.getElementById('clearSortBtn');
+
+const sheetHeader = createSheetHeaderController({
+  fileNameEl: document.getElementById('fileNameDisplay'),
+  statsEl: document.getElementById('sheetStats'),
+  cellRefEl: document.getElementById('cellRefDisplay'),
+  cellValueEl: document.getElementById('cellValueDisplay')
+});
+
+function updateSheetHeader() {
+  sheetHeader.update({
+    rowCount: csvData.length,
+    colCount: headers.length,
+    selectionBounds: cellSelection.getSelectionBounds(),
+    csvData,
+    cellSelection
+  });
+}
+
+function clearFilters() {
+  if (!headers.length) return;
+  columnFilters = Array(headers.length).fill('');
+  document.querySelectorAll('.column-filter').forEach((input) => {
+    input.value = '';
+  });
+  applyFilters({ headers, csvData, columnFilters, sortState }, { tableHead, tableBody, tableFoot });
+  updateSums(
+    { headers, csvData, columnFilters, sortState },
+    { tableHead, tableBody, tableFoot },
+    formatNumberForCell,
+    parseNumber,
+    sourceFormat
+  );
+}
+
+function clearSort() {
+  if (!csvData.length || sortState.columnIndex === null) return;
+  sortState = { columnIndex: null, direction: null };
+  const pairs = csvData.map((row, i) => ({ row, id: rowIds[i] }));
+  pairs.sort((a, b) => a.id - b.id);
+  csvData = pairs.map((p) => p.row);
+  rowIds = pairs.map((p) => p.id);
+  renderTableWrapper();
+}
 
 // Event Listeners
 dropZone.addEventListener('click', () => fileInput.click());
@@ -60,6 +107,9 @@ downloadBtn.addEventListener('click', () => downloadCSV(headers, csvData, delimi
 downloadExcelBtn.addEventListener('click', () => downloadExcel(headers, csvData, sourceFormat));
 newFileBtn.addEventListener('click', resetEditor);
 convertColumnBtn.addEventListener('click', openConvertModal);
+clearFiltersBtn.addEventListener('click', clearFilters);
+clearSortBtn.addEventListener('click', clearSort);
+tableBody.addEventListener('focusin', updateSheetHeader);
 convertModalClose.addEventListener('click', closeConvertModal);
 convertCancelBtn.addEventListener('click', closeConvertModal);
 convertApplyBtn.addEventListener('click', applyConvertModal);
@@ -71,6 +121,7 @@ convertModal.addEventListener('click', (e) => {
 document.addEventListener('keydown', handleGridKeydown);
 document.addEventListener('mouseup', () => {
   if (cellSelection.isSelectingActive()) cellSelection.stopSelection();
+  updateSheetHeader();
 });
 
 // Carregar formato de moeda salvo
@@ -216,15 +267,18 @@ async function processFile(file) {
     setVisualProgress(95);
     headers = parsed.headers;
     csvData = parsed.rows;
+    rowIds = csvData.map((_, i) => i);
     delimiter = parsed.delimiter || ',';
     columnFilters = Array(headers.length).fill('');
     sortState = { columnIndex: null, direction: null };
+    sheetHeader.setFileName(file.name);
     setVisualProgress(99);
     renderTableWrapper();
     await waitForNextFrame();
     setVisualProgress(100);
     await waitForNextFrame();
     showEditor(dropZone, editorContainer);
+    updateSheetHeader();
   } catch {
     toggleUploadLoader(false);
     setUploadProgress(0);
@@ -257,7 +311,8 @@ function renderTableWrapper() {
     },
     formatNumberForCell,
     parseNumber,
-    sourceFormat
+    sourceFormat,
+    onAfterRender: updateSheetHeader
   });
 }
 
@@ -266,9 +321,10 @@ function toggleSort(columnIndex) {
   const direction = isSameColumn && sortState.direction === 'asc' ? 'desc' : 'asc';
   sortState = { columnIndex, direction };
 
-  csvData.sort((rowA, rowB) => {
-    const valueA = rowA[columnIndex] ?? '';
-    const valueB = rowB[columnIndex] ?? '';
+  const pairs = csvData.map((row, i) => ({ row, id: rowIds[i] }));
+  pairs.sort((a, b) => {
+    const valueA = a.row[columnIndex] ?? '';
+    const valueB = b.row[columnIndex] ?? '';
     const numA = parseNumber(valueA, sourceFormat);
     const numB = parseNumber(valueB, sourceFormat);
 
@@ -285,6 +341,8 @@ function toggleSort(columnIndex) {
 
     return direction === 'asc' ? result : -result;
   });
+  csvData = pairs.map((p) => p.row);
+  rowIds = pairs.map((p) => p.id);
 
   renderTableWrapper();
 }
@@ -345,6 +403,7 @@ function handleGridKeydown(e) {
       cell.focus();
       cell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }
+    updateSheetHeader();
   }
 }
 
@@ -531,7 +590,10 @@ function resetEditor() {
   if (confirm('Deseja criar um novo arquivo? Os dados atuais serão perdidos.')) {
     csvData = [];
     headers = [];
+    rowIds = [];
     delimiter = ',';
+    cellSelection.reset();
+    sheetHeader.reset();
     showDropZone(dropZone, editorContainer);
     toggleUploadLoader(false);
     setUploadProgress(0);
