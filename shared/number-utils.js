@@ -40,6 +40,18 @@ export function getDecimalCount(value, format) {
   return frac.length;
 }
 
+export function isDateLikeValue(value) {
+  if (value === null || value === undefined) return false;
+  const str = value.toString().trim();
+  if (!str) return false;
+
+  return (
+    /^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(str) ||
+    /^\d{1,2}-\d{1,2}-\d{2,4}$/.test(str) ||
+    /^\d{4}-\d{2}-\d{2}$/.test(str)
+  );
+}
+
 export function parseNumber(value, format) {
   if (value === null || value === undefined) return null;
   let str = value.toString().trim();

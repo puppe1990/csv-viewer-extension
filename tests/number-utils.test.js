@@ -1,4 +1,4 @@
-const { formatNumber, getDecimalCount, parseNumber } = require('../shared/number-utils');
+const { formatNumber, getDecimalCount, parseNumber, isDateLikeValue } = require('../shared/number-utils');
 
 describe('formatNumber', () => {
   test('formats number in pt-BR format', () => {
@@ -56,6 +56,32 @@ describe('getDecimalCount', () => {
   test('handles auto-detection for mixed formats', () => {
     expect(getDecimalCount('1,234.56')).toBe(2);
     expect(getDecimalCount('1.234,56')).toBe(2);
+  });
+});
+
+describe('isDateLikeValue', () => {
+  test('detects Brazilian date format DD/MM/YYYY', () => {
+    expect(isDateLikeValue('05/06/2026')).toBe(true);
+    expect(isDateLikeValue('9/6/2026')).toBe(true);
+  });
+
+  test('detects ISO date format YYYY-MM-DD', () => {
+    expect(isDateLikeValue('2026-06-05')).toBe(true);
+  });
+
+  test('detects date with dash separators', () => {
+    expect(isDateLikeValue('05-06-2026')).toBe(true);
+  });
+
+  test('returns false for currency values', () => {
+    expect(isDateLikeValue('R$ 120,00')).toBe(false);
+    expect(isDateLikeValue('1.234,56')).toBe(false);
+  });
+
+  test('returns false for plain numbers and text', () => {
+    expect(isDateLikeValue('120')).toBe(false);
+    expect(isDateLikeValue('Entrada')).toBe(false);
+    expect(isDateLikeValue(null)).toBe(false);
   });
 });
 

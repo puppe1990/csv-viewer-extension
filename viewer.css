@@ -222,8 +222,32 @@ body {
 /* Table Container */
 .table-container {
   flex: 1;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
   padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.table-head-wrap {
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
+  border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow);
+}
+
+.table-body-wrap {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
+  border-top: none;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: var(--shadow);
 }
 
 .csv-table {
@@ -231,10 +255,9 @@ body {
   border-collapse: separate;
   border-spacing: 0;
   background: var(--panel-strong);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  border: 1px solid var(--line);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .csv-table th,
@@ -251,21 +274,18 @@ body {
   border-right: none;
 }
 
-.csv-table th {
-  background: linear-gradient(180deg, #eef2f7 0%, #e2e8f0 100%);
+.csv-table thead th {
+  background: #e2e8f0;
   font-weight: 700;
   color: #1f2937;
-  position: sticky;
-  top: 0;
-  z-index: 10;
   user-select: none;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 0.72rem;
 }
 
-.csv-table th:hover {
-  background: #e2e8f0;
+.csv-table thead th:hover {
+  background: #d7dee8;
 }
 
 .csv-table th.column-header {
@@ -334,9 +354,6 @@ body {
 
 .column-filter-row th {
   background: #f8fafc;
-  position: sticky;
-  top: 40px;
-  z-index: 9;
 }
 
 .column-filter {
@@ -406,23 +423,23 @@ body {
 }
 
 /* Scrollbar styling */
-.table-container::-webkit-scrollbar {
+.table-body-wrap::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
 
-.table-container::-webkit-scrollbar-track {
+.table-body-wrap::-webkit-scrollbar-track {
   background: #e2e8f0;
   border-radius: 999px;
 }
 
-.table-container::-webkit-scrollbar-thumb {
+.table-body-wrap::-webkit-scrollbar-thumb {
   background: #94a3b8;
   border-radius: 999px;
   border: 3px solid #e2e8f0;
 }
 
-.table-container::-webkit-scrollbar-thumb:hover {
+.table-body-wrap::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
 

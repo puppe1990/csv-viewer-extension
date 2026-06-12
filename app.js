@@ -394,8 +394,8 @@ async function pasteFromClipboard() {
     { row: maxRow, col: maxCol },
     false
   );
-  updateSums({ headers, csvData, columnFilters, sortState }, { tableHead, tableBody, tableFoot }, formatNumberForCell, parseNumber, sourceFormat);
   applyFilters({ headers, csvData, columnFilters, sortState }, { tableHead, tableBody, tableFoot });
+  updateSums({ headers, csvData, columnFilters, sortState }, { tableHead, tableBody, tableFoot }, formatNumberForCell, parseNumber, sourceFormat);
 }
 
 async function writeClipboardText(text) {
